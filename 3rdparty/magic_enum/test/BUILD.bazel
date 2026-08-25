@@ -1,0 +1,29 @@
+load("@rules_cc//cc:defs.bzl", "cc_test", "cc_library")
+
+_TESTS = [
+    "test",
+    "test_aliases",
+    "test_containers",
+    "test_flags",
+    "test_range",
+    "test_wchar_t",
+]
+
+_MSVC_FLAGS = ["/std:c++17", "/permissive-"]
+_COPTS = select({
+    "//conditions:default": ["-std=c++17"],
+    "@rules_cc//cc/compiler:msvc-cl": _MSVC_FLAGS,
+    "@rules_cc//cc/compiler:clang-cl": _MSVC_FLAGS,
+})
+[cc_test(
+    name = test,
+    srcs = ["{}.cpp".format(test), "aliases.hpp", "test_helpers.hpp"],
+    deps = ["@magic_enum", ":doctest"],
+    copts = _COPTS,
+) for test in _TESTS]
+
+cc_library(
+    name = "doctest",
+    includes = ["3rdparty"],
+    hdrs = ["3rdparty/doctest/doctest.h"],
+)
