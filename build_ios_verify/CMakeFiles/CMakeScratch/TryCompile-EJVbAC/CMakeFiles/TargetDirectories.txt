@@ -1,0 +1,2 @@
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios_verify/CMakeFiles/CMakeScratch/TryCompile-EJVbAC/CMakeFiles/cmTC_be32b.dir
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios_verify/CMakeFiles/CMakeScratch/TryCompile-EJVbAC/CMakeFiles/ALL_BUILD.dir

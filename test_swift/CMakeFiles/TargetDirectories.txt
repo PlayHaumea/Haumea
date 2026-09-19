@@ -1,0 +1,2 @@
+/Users/davi/Documents/Git/PlayHaumea/Haumea/test_swift/CMakeFiles/ALL_BUILD.dir
+/Users/davi/Documents/Git/PlayHaumea/Haumea/test_swift/CMakeFiles/ZERO_CHECK.dir

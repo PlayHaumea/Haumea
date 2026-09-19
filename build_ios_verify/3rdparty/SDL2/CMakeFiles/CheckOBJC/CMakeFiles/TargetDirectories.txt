@@ -1,0 +1,2 @@
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios_verify/3rdparty/SDL2/CMakeFiles/CheckOBJC/CMakeFiles/ALL_BUILD.dir
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios_verify/3rdparty/SDL2/CMakeFiles/CheckOBJC/CMakeFiles/ZERO_CHECK.dir

@@ -673,6 +673,24 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 	if(NOT EXISTS "${HAUMEA_MOLTENVK_INCLUDE_DIR}/MoltenVK/mvk_private_api.h")
 		message(FATAL_ERROR "MoltenVK headers not found under: ${HAUMEA_MOLTENVK_INCLUDE_DIR}")
 	endif()
+
+	enable_language(Swift)
+	add_executable(HaumeaApp MACOSX_BUNDLE
+		"${KYTY_SOURCE_DIR}/ios/App/HaumeaApp.swift"
+		"${KYTY_SOURCE_DIR}/ios/App/LibraryView.swift"
+		"${KYTY_SOURCE_DIR}/ios/App/SettingsView.swift"
+		"${KYTY_SOURCE_DIR}/ios/App/EmulatorView.swift"
+		"${KYTY_SOURCE_DIR}/ios/App/EmulatorCore.swift"
+		"${KYTY_SOURCE_DIR}/ios/App/GamepadView.swift"
+		"${KYTY_SOURCE_DIR}/ios/App/Assets.xcassets"
+	)
+	set_target_properties(HaumeaApp PROPERTIES
+		MACOSX_BUNDLE_GUI_IDENTIFIER "com.playhaumea.app"
+		MACOSX_BUNDLE_BUNDLE_NAME "Haumea"
+		XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${KYTY_SOURCE_DIR}/ios/App/Bridging-Header.h"
+		XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+	)
+	target_link_libraries(HaumeaApp PRIVATE kyty_emulator "-framework SwiftUI" "-framework Metal" "-framework QuartzCore" "${HAUMEA_MOLTENVK_LIBRARY}")
 endif()
 
 target_link_libraries(kyty_emulator ${kyty_emulator_link_libraries})
