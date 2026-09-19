@@ -20,7 +20,7 @@ extern "C" uint64_t FEXFrontendCompileMicroseconds() { return 0; }
 extern "C" uint64_t FEXBackendCompileMicroseconds() { return 0; }
 extern "C" bool StingerFixUnalignedFault(void *) { return false; }
 
-namespace Magnus {
+namespace Haumea {
 uint64_t UnalignedAccessCount() { return 0; }
 uint64_t UnalignedAccessCount(uint32_t) { return 0; }
 uint64_t GuestFaultCount(uint32_t) { return 0; }

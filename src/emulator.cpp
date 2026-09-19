@@ -153,10 +153,10 @@ static void Execute(const std::filesystem::path& game_patch) {
 	Common::Thread guest_thread(
 	    [](void* param) {
 		    auto* rt = Common::Singleton<Loader::RuntimeLinker>::Instance();
-		    std::printf("Magnus:Guest:Info: entry thread started\n");
+		    std::printf("Haumea:Guest:Info: entry thread started\n");
 		    std::fflush(stdout);
 		    rt->Execute(*static_cast<const std::filesystem::path*>(param));
-		    std::printf("Magnus:Guest:Error: entry thread returned, no guest is running\n");
+		    std::printf("Haumea:Guest:Error: entry thread returned, no guest is running\n");
 		    std::fflush(stdout);
 	    },
 	    &patch_path);

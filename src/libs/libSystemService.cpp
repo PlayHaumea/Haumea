@@ -125,7 +125,7 @@ static int KYTY_SYSV_ABI SystemServiceParamGetString(int param_id, char* buf, si
 
 	const char* value = nullptr;
 	switch (param_id) {
-		case PARAM_ID_SYSTEM_NAME: value = "Magnus"; break;
+		case PARAM_ID_SYSTEM_NAME: value = "Haumea"; break;
 		default: EXIT("unknown string param_id: %d\n", param_id);
 	}
 

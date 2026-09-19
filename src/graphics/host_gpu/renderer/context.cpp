@@ -48,7 +48,7 @@ constexpr uint64_t SUBMIT_SYNC_TIMEOUT_NS = 5ull * 1000ull * 1000ull * 1000ull;
 
 bool SubmitSyncEnabled() {
 	static const bool enabled = [] {
-		const char* value = std::getenv("MAGNUS_SUBMIT_SYNC");
+		const char* value = std::getenv("HAUMEA_SUBMIT_SYNC");
 		return value != nullptr && value[0] == '1';
 	}();
 	return enabled;

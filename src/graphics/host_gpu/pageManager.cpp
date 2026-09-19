@@ -32,7 +32,7 @@ namespace Libs::Graphics {
 namespace {
 
 const bool g_hot_page_escape = [] {
-	const char* value = std::getenv("MAGNUS_HOT_PAGE");
+	const char* value = std::getenv("HAUMEA_HOT_PAGE");
 	return value != nullptr && value[0] == '1';
 }();
 

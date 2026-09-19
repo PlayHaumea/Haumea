@@ -1541,7 +1541,7 @@ int KYTY_SYSV_ABI KernelGetModuleInfoForUnwind(uint64_t addr, int flags,
 		if (addr < 0x800000000ull) {
 			std::memset(info, 0, sizeof(ModuleInfoForUnwind));
 			info->st_size = sizeof(ModuleInfoForUnwind);
-			std::snprintf(info->name, sizeof(info->name), "%s", "MagnusHostBoundary");
+			std::snprintf(info->name, sizeof(info->name), "%s", "HaumeaHostBoundary");
 			info->seg0_addr = addr & ~0xfffffull;
 			info->seg0_size = 0x100000;
 			return OK;

@@ -114,7 +114,7 @@ int KYTY_SYSV_ABI AppContentInitialize(const AppContentInitParam* init_param,
 
 	g_addcont_root.clear();
 	g_mount_index = 0;
-	if (const char* root = std::getenv("MAGNUS_DLC_ROOT"); root != nullptr && root[0] != '\0') {
+	if (const char* root = std::getenv("HAUMEA_DLC_ROOT"); root != nullptr && root[0] != '\0') {
 		std::error_code ec;
 		g_addcont_root = root;
 		if (!std::filesystem::is_directory(g_addcont_root, ec)) {
@@ -125,7 +125,7 @@ int KYTY_SYSV_ABI AppContentInitialize(const AppContentInitParam* init_param,
 			LOGF("\t DLC root    = %s\n", g_addcont_root.string().c_str());
 		}
 	} else {
-		LOGF("\t MAGNUS_DLC_ROOT missing\n");
+		LOGF("\t HAUMEA_DLC_ROOT missing\n");
 	}
 
 	return OK;

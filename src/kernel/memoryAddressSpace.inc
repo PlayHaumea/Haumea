@@ -97,14 +97,14 @@ public:
 #if defined(__APPLE__)
 		{
 			char shm_name[64];
-			snprintf(shm_name, sizeof(shm_name), "/magnus-dm-%d-%llx", static_cast<int>(getpid()),
+			snprintf(shm_name, sizeof(shm_name), "/haumea-dm-%d-%llx", static_cast<int>(getpid()),
 			         static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(this)));
 				m_fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, 0600);
 				if (m_fd >= 0) {
 					shm_unlink(shm_name);
 				} else if (const char* temp = std::getenv("TMPDIR")) {
 					char temp_name[1024];
-					const int length = std::snprintf(temp_name, sizeof(temp_name), "%s/magnus-dm-XXXXXX", temp);
+					const int length = std::snprintf(temp_name, sizeof(temp_name), "%s/haumea-dm-XXXXXX", temp);
 					if (length > 0 && static_cast<size_t>(length) < sizeof(temp_name)) {
 						m_fd = mkstemp(temp_name);
 						if (m_fd >= 0) {
@@ -501,7 +501,7 @@ public:
 			if (!UnmapViewPreservePlaceholder(reinterpret_cast<void*>(vaddr), size)) {
 				const int error = errno;
 				std::fprintf(stderr,
-				             "Magnus:Memory:Error: backing unmap failed mapping=[0x%llx,0x%llx) "
+				             "Haumea:Memory:Error: backing unmap failed mapping=[0x%llx,0x%llx) "
 				             "remove=[0x%llx,0x%llx) errno=%d\n",
 				             static_cast<unsigned long long>(old.vaddr),
 				             static_cast<unsigned long long>(old_end),
@@ -1325,7 +1325,7 @@ private:
 
 			void* ptr = mmap(reinterpret_cast<void*>(start), size, PROT_NONE, flags, -1, 0);
 			if (ptr == MAP_FAILED || reinterpret_cast<uint64_t>(ptr) != start) {
-				if (std::getenv("MAGNUS_VERBOSE") != nullptr) {
+				if (std::getenv("HAUMEA_VERBOSE") != nullptr) {
 					printf("guest reserve FAILED [0x%016" PRIx64 ", 0x%016" PRIx64
 					       ") size=0x%" PRIx64 " %s\n",
 					       start, end, size,
@@ -1336,7 +1336,7 @@ private:
 				}
 				return;
 			}
-			if (std::getenv("MAGNUS_VERBOSE") != nullptr) {
+			if (std::getenv("HAUMEA_VERBOSE") != nullptr) {
 				printf("guest reserve ok     [0x%016" PRIx64 ", 0x%016" PRIx64
 				       ") size=0x%" PRIx64 "\n",
 				       start, end, size);

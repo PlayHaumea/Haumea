@@ -108,7 +108,7 @@ void LoadingStatusUpdate(SDL_Window* window, std::string_view title, std::string
 		loading_audio.volume = 0.28;
 		const bool prepared = [loading_audio prepareToPlay];
 		const bool playing = [loading_audio play];
-		std::printf("Magnus:LoadingAudio:Info: prepared=%d playing=%d error=%s\n", prepared,
+		std::printf("Haumea:LoadingAudio:Info: prepared=%d playing=%d error=%s\n", prepared,
 		            playing, audio_error != nil ? audio_error.localizedDescription.UTF8String : "none");
 	}
 

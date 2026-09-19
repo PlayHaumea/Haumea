@@ -158,7 +158,7 @@ static void SleepMachNanos(uint64_t nanos) {
 	if (timebase.result != KERN_SUCCESS || timebase.value.numer == 0 || timebase.value.denom == 0) {
 		static std::atomic<bool> reported {false};
 		if (!reported.exchange(true, std::memory_order_relaxed)) {
-			std::fprintf(stderr, "Magnus:Timer:Error: mach_timebase_info failed rc=%d numer=%u denom=%u\n",
+			std::fprintf(stderr, "Haumea:Timer:Error: mach_timebase_info failed rc=%d numer=%u denom=%u\n",
 			             timebase.result, timebase.value.numer, timebase.value.denom);
 			std::fflush(stderr);
 		}
@@ -177,7 +177,7 @@ static void SleepMachNanos(uint64_t nanos) {
 		static std::atomic<uint64_t> failures {0};
 		const auto count = failures.fetch_add(1, std::memory_order_relaxed) + 1;
 		if (count == 1 || count % 60 == 0) {
-			std::fprintf(stderr, "Magnus:Timer:Error: mach_wait_until failed rc=%d count=%llu\n", result,
+			std::fprintf(stderr, "Haumea:Timer:Error: mach_wait_until failed rc=%d count=%llu\n", result,
 			             static_cast<unsigned long long>(count));
 			std::fflush(stderr);
 		}

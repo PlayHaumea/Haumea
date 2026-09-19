@@ -720,13 +720,13 @@ void Swapchain::RecordPresentCommands(CommandBuffer& command, VulkanImage& sourc
 	                     m_images[m_image_index], vk::ImageLayout::eTransferDstOptimal, 1, &region,
 	                     vk::Filter::eLinear);
 
-	const char* capture_path = std::getenv("MAGNUS_CAPTURE");
-	const char* capture_frame_text = std::getenv("MAGNUS_CAPTURE_FRAME");
+	const char* capture_path = std::getenv("HAUMEA_CAPTURE");
+	const char* capture_frame_text = std::getenv("HAUMEA_CAPTURE_FRAME");
 	const auto  capture_frame =
 	    capture_frame_text != nullptr && capture_frame_text[0] != '\0'
 	        ? std::max<uint64_t>(std::strtoull(capture_frame_text, nullptr, 10), 1)
 	        : 120;
-	const char* capture_every_text = std::getenv("MAGNUS_CAPTURE_EVERY");
+	const char* capture_every_text = std::getenv("HAUMEA_CAPTURE_EVERY");
 	const auto  capture_every =
 	    capture_every_text != nullptr && capture_every_text[0] != '\0'
 	        ? std::max<uint64_t>(std::strtoull(capture_every_text, nullptr, 10), 1)
@@ -738,7 +738,7 @@ void Swapchain::RecordPresentCommands(CommandBuffer& command, VulkanImage& sourc
 		const bool rgba = source.format == vk::Format::eR8G8B8A8Unorm;
 		const bool bgra = source.format == vk::Format::eB8G8R8A8Unorm;
 		if (!rgba && !bgra) {
-			std::printf("Magnus:Capture:Error: unsupported format=%d\n",
+			std::printf("Haumea:Capture:Error: unsupported format=%d\n",
 			            static_cast<int>(source.format));
 			m_capture_done = true;
 		} else {
@@ -868,7 +868,7 @@ void Swapchain::Submit(CommandBuffer& command) {
 		const auto average = [count](uint64_t sum) {
 			return count != 0 ? static_cast<double>(sum) / static_cast<double>(count) : 0.0;
 		};
-		std::printf("Magnus:Capture:Info: path=%s size=%ux%u nonzero=%llu/%llu "
+		std::printf("Haumea:Capture:Info: path=%s size=%ux%u nonzero=%llu/%llu "
 		            "luma_min=%u luma_max=%u luma_avg=%.6f r_avg=%.3f g_avg=%.3f b_avg=%.3f "
 		            "blue_dominant=%llu/%llu\n",
 		            m_capture_path.c_str(), m_capture_extent.width, m_capture_extent.height,
@@ -878,7 +878,7 @@ void Swapchain::Submit(CommandBuffer& command) {
 		            static_cast<unsigned long long>(blue_dominant),
 		            static_cast<unsigned long long>(count));
 		m_capture_pending = false;
-		const char* every_text = std::getenv("MAGNUS_CAPTURE_EVERY");
+		const char* every_text = std::getenv("HAUMEA_CAPTURE_EVERY");
 		const auto  every      = every_text != nullptr && every_text[0] != '\0'
 		                             ? std::max<uint64_t>(std::strtoull(every_text, nullptr, 10), 1)
 		                             : 0;

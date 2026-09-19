@@ -1501,7 +1501,7 @@ void RuntimeLinker::Execute(const std::filesystem::path& game_patch) {
 		    (reinterpret_cast<uintptr_t>(main_stack_top) - 0x100u) & ~static_cast<uintptr_t>(0x0f));
 		std::memset(params, 0, sizeof(EntryParams));
 		params->argc    = 1;
-		params->argv[0] = "Magnus";
+		params->argv[0] = "Haumea";
 
 		LOGF("stack_addr = %" PRIx64 "\n", reinterpret_cast<uint64_t>(params));
 

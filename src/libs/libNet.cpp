@@ -1507,7 +1507,7 @@ struct NpEntitlementAccessAddcontEntitlementInfo {
 
 static std::vector<NpEntitlementAccessAddcontEntitlementInfo> AvailableAddcontEntitlements() {
 	std::vector<NpEntitlementAccessAddcontEntitlementInfo> available;
-	const char* root = std::getenv("MAGNUS_DLC_ROOT");
+	const char* root = std::getenv("HAUMEA_DLC_ROOT");
 	if (root == nullptr || root[0] == '\0') {
 		return available;
 	}
@@ -2024,7 +2024,7 @@ static int KYTY_SYSV_ABI NpTrophy2GetGameInfo(int context, int handle,
 		std::memset(details, 0, sizeof(*details));
 		details->num_trophies = 1;
 		details->num_bronze   = 1;
-		NpTrophy2FillTitle(details->title, sizeof(details->title), "Magnus");
+		NpTrophy2FillTitle(details->title, sizeof(details->title), "Haumea");
 	}
 	if (data != nullptr) {
 		std::memset(data, 0, sizeof(*data));

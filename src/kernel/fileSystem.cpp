@@ -356,7 +356,7 @@ void Initialize() {
 		EXIT("guest filesystem root failed: error=%d %s\n", error.value(),
 		     error.message().c_str());
 	}
-	std::printf("Magnus:FileSystem:Info: guest root ready\n");
+	std::printf("Haumea:FileSystem:Info: guest root ready\n");
 #endif
 }
 

@@ -164,8 +164,8 @@ static AccessViolationType DecodeAccess(uint64_t esr) {
 }
 
 // The syndrome carries the fault CLASS in its low six bits, and a handler that only reads
-// the direction bit cannot tell a permission fault from one it can never fix. MAGNUS_ESR=1.
-static const bool g_report_syndrome = std::getenv("MAGNUS_ESR") != nullptr;
+// the direction bit cannot tell a permission fault from one it can never fix. HAUMEA_ESR=1.
+static const bool g_report_syndrome = std::getenv("HAUMEA_ESR") != nullptr;
 static std::atomic<uint64_t> g_syndrome_reports {0};
 
 static void ReportSyndrome(int sig, const siginfo_t* si, uint64_t esr, uint64_t pc) {
@@ -173,7 +173,7 @@ static void ReportSyndrome(int sig, const siginfo_t* si, uint64_t esr, uint64_t 
 		return;
 	}
 	std::fprintf(stderr,
-	             "Magnus:Fault:Info: sig=%d code=%d at=%p pc=0x%016llx esr=0x%016llx ec=0x%02llx "
+	             "Haumea:Fault:Info: sig=%d code=%d at=%p pc=0x%016llx esr=0x%016llx ec=0x%02llx "
 	             "dfsc=0x%02llx wnr=%llu\n",
 	             sig, si != nullptr ? si->si_code : 0, si != nullptr ? si->si_addr : nullptr,
 	             static_cast<unsigned long long>(pc), static_cast<unsigned long long>(esr),
@@ -213,7 +213,7 @@ static void SignalHandler(int sig, siginfo_t* si, void* uctx) {
 				return;
 			}
 			std::fprintf(stderr,
-			             "Magnus:Fault:Error: unaligned access the CPU layer declined, at=%p "
+			             "Haumea:Fault:Error: unaligned access the CPU layer declined, at=%p "
 			             "pc=0x%016llx esr=0x%016llx\n",
 			             si != nullptr ? si->si_addr : nullptr,
 			             static_cast<unsigned long long>(ss.__pc),

@@ -228,7 +228,7 @@ void RenderExecutor::DispatchDirect(uint64_t submit_id, RenderCommandBuffer& buf
 	}
 
 	static const bool indirect_dispatch_armed = [] {
-		const char* value = std::getenv("MAGNUS_INDIRECT_DISPATCH");
+		const char* value = std::getenv("HAUMEA_INDIRECT_DISPATCH");
 		return value == nullptr || value[0] != '0';
 	}();
 	if (!indirect_dispatch_armed) {
@@ -245,7 +245,7 @@ void RenderExecutor::DispatchDirect(uint64_t submit_id, RenderCommandBuffer& buf
 		    gpu_owned ? host_owned.load(std::memory_order_relaxed)
 		              : host_owned.fetch_add(1, std::memory_order_relaxed) + 1;
 		if (seen <= 4 || (seen % 2048) == 0) {
-			std::printf("Magnus:Dispatch:Info: indirect reached=%llu host_owned=%llu gpu_owned=%llu "
+			std::printf("Haumea:Dispatch:Info: indirect reached=%llu host_owned=%llu gpu_owned=%llu "
 			            "args=0x%016llx\n",
 			            static_cast<unsigned long long>(seen),
 			            static_cast<unsigned long long>(host),
@@ -263,7 +263,7 @@ void RenderExecutor::DispatchDirect(uint64_t submit_id, RenderCommandBuffer& buf
 		static std::atomic_bool logged {false};
 		if (!logged.exchange(true, std::memory_order_relaxed)) {
 			std::fprintf(stderr,
-			             "Magnus:Dispatch:Warning: indirect dispatch asks for thread dimensions, "
+			             "Haumea:Dispatch:Warning: indirect dispatch asks for thread dimensions, "
 			             "falling back to host-read group counts mode=0x%08" PRIx32 "\n",
 			             mode);
 			std::fflush(stderr);
@@ -294,7 +294,7 @@ void RenderExecutor::DispatchDirect(uint64_t submit_id, RenderCommandBuffer& buf
 		}
 	}
 	{
-		static const bool audit = std::getenv("MAGNUS_CS_AUDIT") != nullptr;
+		static const bool audit = std::getenv("HAUMEA_CS_AUDIT") != nullptr;
 		if (audit) {
 			static std::atomic<uint64_t> flagged {0};
 			for (uint32_t i = 0; i < program.info.buffers.size(); i++) {
@@ -304,7 +304,7 @@ void RenderExecutor::DispatchDirect(uint64_t submit_id, RenderCommandBuffer& buf
 				const bool  bad  = (base == 0 && r.NumRecords() != 0) || span >= (1ull << 32u) ||
 				                  (base != 0 && base + span < base);
 				if (bad && flagged.fetch_add(1, std::memory_order_relaxed) < 64) {
-					std::printf("Magnus:Dispatch:Warning: suspect CS buffer[%u] hash0=%u base=0x%012llx "
+					std::printf("Haumea:Dispatch:Warning: suspect CS buffer[%u] hash0=%u base=0x%012llx "
 					            "stride=%u records=%u span=0x%llx groups=%ux%ux%u\n",
 					            i, ShaderGetIdCS(sh_ctx.GetCs(), input_info, true).hash0,
 					            static_cast<unsigned long long>(base), r.Stride(), r.NumRecords(),

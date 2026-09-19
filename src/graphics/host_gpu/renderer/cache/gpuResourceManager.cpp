@@ -14,7 +14,7 @@ namespace Libs::Graphics {
 
 namespace {
 
-const bool g_report_faults = std::getenv("MAGNUS_GPUFAULT") != nullptr;
+const bool g_report_faults = std::getenv("HAUMEA_GPUFAULT") != nullptr;
 
 std::atomic<uint64_t> g_fault_reads {0};
 std::atomic<uint64_t> g_fault_writes {0};
@@ -48,7 +48,7 @@ uint64_t CountFault(PageFaultAccess access, uint64_t fault_vaddr) noexcept {
             mach_task_self(), &query, &length, VM_REGION_BASIC_INFO_64,
             reinterpret_cast<vm_region_info_t>(&info), &count, &object);
 		std::fprintf(stderr,
-		             "Magnus:GpuFault:Info: first fault page=0x%016llx at=0x%016llx access=%d "
+		             "Haumea:GpuFault:Info: first fault page=0x%016llx at=0x%016llx access=%d "
 		             "region=0x%016llx len=0x%llx cur=%d max=%d rc=%d\n",
 		             static_cast<unsigned long long>(page),
 		             static_cast<unsigned long long>(fault_vaddr), static_cast<int>(access),
@@ -58,7 +58,7 @@ uint64_t CountFault(PageFaultAccess access, uint64_t fault_vaddr) noexcept {
 	}
 	if (total % 100000 == 0) {
 		std::fprintf(stderr,
-		             "Magnus:GpuFault:Info: read=%llu write=%llu same_page=%llu page=0x%016llx\n",
+		             "Haumea:GpuFault:Info: read=%llu write=%llu same_page=%llu page=0x%016llx\n",
 		             static_cast<unsigned long long>(reads),
 		             static_cast<unsigned long long>(writes),
 		             static_cast<unsigned long long>(
@@ -81,7 +81,7 @@ void ReportFaultResolution(uint64_t total, uint64_t page, uint32_t watchers) noe
 	    mach_task_self(), &query, &length, VM_REGION_BASIC_INFO_64,
 	    reinterpret_cast<vm_region_info_t>(&info), &count, &object);
 	std::fprintf(stderr,
-	             "Magnus:GpuFault:Info: resolved=%llu page=0x%016llx write_watchers=%u "
+	             "Haumea:GpuFault:Info: resolved=%llu page=0x%016llx write_watchers=%u "
 	             "access_watchers=%u tracker_perms=%u kernel_perms=%d rc=%d\n",
 	             static_cast<unsigned long long>(total), static_cast<unsigned long long>(page),
 	             watchers & 0xffu, (watchers >> 8u) & 0xffu, watchers >> 16u,

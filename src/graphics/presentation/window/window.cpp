@@ -291,7 +291,7 @@ void ExternalSurfaceSize(uint32_t* width, uint32_t* height) {
 
 void SetAppPaused(bool paused) {
 	g_app_paused.store(paused, std::memory_order_release);
-	std::printf("Magnus:Lifecycle:Info: renderer paused=%d\n", paused ? 1 : 0);
+	std::printf("Haumea:Lifecycle:Info: renderer paused=%d\n", paused ? 1 : 0);
 }
 
 bool IsAppPaused() {
@@ -471,12 +471,12 @@ static void PadRecordOpen() {
 		return;
 	}
 	g_pad_record_checked = true;
-	const char* path     = std::getenv("MAGNUS_PAD_RECORD");
+	const char* path     = std::getenv("HAUMEA_PAD_RECORD");
 	if (path == nullptr || path[0] == '\0') {
 		return;
 	}
 	g_pad_record_file = std::fopen(path, "w");
-	std::printf("Magnus:Pad:Info: record %s path=%s\n",
+	std::printf("Haumea:Pad:Info: record %s path=%s\n",
 	            g_pad_record_file != nullptr ? "open" : "FAILED", path);
 	std::fflush(stdout);
 }
@@ -568,17 +568,17 @@ static void PadReplayConnect(int id) {
 	}
 	Controller::ControllerConnect(port, id);
 	Controller::ControllerSetPortConnected(port, true);
-	std::printf("Magnus:Pad:Info: replay pad connected port=%d id=%d\n", port, id);
+	std::printf("Haumea:Pad:Info: replay pad connected port=%d id=%d\n", port, id);
 }
 
 static void PadReplayLoad() {
-	const char* path = std::getenv("MAGNUS_PAD_REPLAY");
+	const char* path = std::getenv("HAUMEA_PAD_REPLAY");
 	if (path == nullptr || path[0] == '\0') {
 		return;
 	}
 	FILE* file = std::fopen(path, "r");
 	if (file == nullptr) {
-		std::printf("Magnus:Pad:Error: replay open failed path=%s\n", path);
+		std::printf("Haumea:Pad:Error: replay open failed path=%s\n", path);
 		return;
 	}
 	char line[256];
@@ -594,9 +594,9 @@ static void PadReplayLoad() {
 		}
 	}
 	std::fclose(file);
-	const char* clock    = std::getenv("MAGNUS_PAD_REPLAY_CLOCK");
+	const char* clock    = std::getenv("HAUMEA_PAD_REPLAY_CLOCK");
 	g_pad_replay_by_time = clock != nullptr && (clock[0] == 't' || clock[0] == 'T');
-	std::printf("Magnus:Pad:Info: replay loaded events=%zu clock=%s path=%s\n",
+	std::printf("Haumea:Pad:Info: replay loaded events=%zu clock=%s path=%s\n",
 	            g_pad_replay_events.size(), g_pad_replay_by_time ? "time" : "frame", path);
 }
 
@@ -749,7 +749,7 @@ void WindowContext::ProcessDisplayEvent(const SDL_DisplayEvent& display) {
 		case SDL_DISPLAYEVENT_ORIENTATION: sdl = true; [[fallthrough]];
 		case static_cast<Uint8>(DisplayOrientation::DisplayEventOrientation): {
 			LOGF("Display %" PRIu32 "[%s] changed orientation to %d - ", display.display,
-			     sdl ? "SDL" : "Magnus", static_cast<int>(display.data1));
+			     sdl ? "SDL" : "Haumea", static_cast<int>(display.data1));
 
 			switch (display.data1) {
 				case SDL_ORIENTATION_UNKNOWN: LOGF("UNKNOWN\n"); break;

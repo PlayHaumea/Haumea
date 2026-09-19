@@ -116,7 +116,7 @@ static KYTY_SYSV_ABI int UserServiceGetUserName(int user_id, char* name, size_t 
 	EXIT_NOT_IMPLEMENTED(size < 7);
 
 	const int port = Controller::PortForUserId(user_id);
-	int       s    = port == 0 ? snprintf(name, size, "Magnus")
+	int       s    = port == 0 ? snprintf(name, size, "Haumea")
 	                           : snprintf(name, size, "Player %d", port + 1);
 
 	EXIT_NOT_IMPLEMENTED(static_cast<size_t>(s) >= size);

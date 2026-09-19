@@ -167,13 +167,13 @@ void RenderExecutor::ResolveRenderDepthTarget(uint64_t submit_id, RenderCommandB
 			           z.depth_view.slice_max);
 	}
 	static const bool bound_mip_supported = [] {
-		const char* value = std::getenv("MAGNUS_DEPTH_MIP");
+		const char* value = std::getenv("HAUMEA_DEPTH_MIP");
 		return value == nullptr || value[0] != '0';
 	}();
 	if (z.depth_view.current_mip_level != 0 && bound_mip_supported) {
 		static std::atomic_bool logged {false};
 		if (!logged.exchange(true, std::memory_order_relaxed)) {
-			std::fprintf(stderr, "Magnus:Depth:Info: bound mip level %u accepted\n",
+			std::fprintf(stderr, "Haumea:Depth:Info: bound mip level %u accepted\n",
 			             z.depth_view.current_mip_level);
 			std::fflush(stderr);
 		}

@@ -890,9 +890,9 @@ void WindowContext::CreateVulkan() {
 	vk::ApplicationInfo app_info {};
 	app_info.sType              = vk::StructureType::eApplicationInfo;
 	app_info.pNext              = nullptr;
-	app_info.pApplicationName   = "Magnus";
+	app_info.pApplicationName   = "Haumea";
 	app_info.applicationVersion = 1;
-	app_info.pEngineName        = "Magnus";
+	app_info.pEngineName        = "Haumea";
 	app_info.engineVersion      = 1;
 	app_info.apiVersion         = VULKAN_TARGET_API_VERSION; // NOLINT
 

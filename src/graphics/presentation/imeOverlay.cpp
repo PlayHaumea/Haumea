@@ -571,7 +571,7 @@ struct ImeOverlay::Impl {
 		io.LogFilename = nullptr;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 		io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
-		io.BackendPlatformName = "Magnus IME input";
+		io.BackendPlatformName = "Haumea IME input";
 		ImGui::StyleColorsDark();
 		auto& style          = ImGui::GetStyle();
 		style.WindowRounding = 10.0f;

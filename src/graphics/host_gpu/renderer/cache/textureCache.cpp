@@ -33,7 +33,7 @@ namespace {
 constexpr uint64_t NumFramesBeforeRemoval = 32;
 
 const bool g_deferred_dcc_clear = [] {
-	const char* value = std::getenv("MAGNUS_DCC_CLEAR");
+	const char* value = std::getenv("HAUMEA_DCC_CLEAR");
 	return value == nullptr || value[0] != '0';
 }();
 

@@ -39,7 +39,7 @@ LIB_NAME("VideoOut", "VideoOut");
 namespace EventQueue = LibKernel::EventQueue;
 
 const bool g_fast_loading_vblank = [] {
-	const char* value = std::getenv("MAGNUS_FAST_LOADING");
+	const char* value = std::getenv("HAUMEA_FAST_LOADING");
 	return value != nullptr && value[0] == '1';
 }();
 

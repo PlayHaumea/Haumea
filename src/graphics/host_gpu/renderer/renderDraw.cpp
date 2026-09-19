@@ -1304,7 +1304,7 @@ void RenderExecutor::DrawIndex(uint64_t submit_id, RenderCommandBuffer& buffer,
 		static std::atomic_bool logged {false};
 		if (!logged.exchange(true, std::memory_order_relaxed)) {
 			std::fprintf(stderr,
-			             "Magnus:Draw:Warning: skipped indexed draw with no index buffer, "
+			             "Haumea:Draw:Warning: skipped indexed draw with no index buffer, "
 			             "index_count=%u instance_count=%u\n",
 			             index_count, instance_count);
 			std::fflush(stderr);

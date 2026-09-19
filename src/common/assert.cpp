@@ -26,13 +26,13 @@ static std::string BuildFatalReport(std::string_view text, const char* file, int
 		source.remove_prefix(slash + 1);
 	}
 
-	std::string report = fmt::format("Magnus:Core:Fatal: {} file=\"{}\" line={} build=\"{}\"\n",
+	std::string report = fmt::format("Haumea:Core:Fatal: {} file=\"{}\" line={} build=\"{}\"\n",
 	                                 text, source, line, KYTY_BUILD_LABEL);
-	if (std::getenv("MAGNUS_VERBOSE") != nullptr) {
+	if (std::getenv("HAUMEA_VERBOSE") != nullptr) {
 		DebugStack stack;
 		DebugStack::Trace(&stack);
 		for (int i = PRINT_STACK_FROM; i < stack.depth; i++) {
-			report += fmt::format("Magnus:Core:Trace: frame={} address=0x{:016x}\n",
+			report += fmt::format("Haumea:Core:Trace: frame={} address=0x{:016x}\n",
 			                      i - PRINT_STACK_FROM,
 			                      static_cast<uint64_t>(stack.GetAddr(i)));
 		}

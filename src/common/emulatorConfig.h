@@ -46,7 +46,7 @@ struct ConfigOptions {
 	std::filesystem::path  command_buffer_dump_folder  = "_Buffers";
 	bool                   graphics_debug_dump_enabled = false;
 	OutputDirection        printf_direction            = OutputDirection::Console;
-	std::filesystem::path  printf_output_file          = "_magnus.txt";
+	std::filesystem::path  printf_output_file          = "_haumea.txt";
 	ProfilerDirection      profiler_direction          = ProfilerDirection::None;
 	bool                   spirv_debug_printf_enabled  = false;
 	bool                   gpu_assisted_validation_enabled = false;

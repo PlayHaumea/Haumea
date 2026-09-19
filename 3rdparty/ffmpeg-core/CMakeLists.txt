@@ -7,10 +7,10 @@ add_library(${FFMPEG_CORE_NAME} INTERFACE)
 target_include_directories(${FFMPEG_CORE_NAME} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 if(IOS)
-	set(MAGNUS_FFMPEG_IOS_ROOT "${CMAKE_CURRENT_LIST_DIR}/../ffmpeg-ios"
+	set(HAUMEA_FFMPEG_IOS_ROOT "${CMAKE_CURRENT_LIST_DIR}/../ffmpeg-ios"
 		CACHE PATH "FFmpeg iPhoneOS build")
-	set(FFMPEG_LIB_PATH "${MAGNUS_FFMPEG_IOS_ROOT}/lib")
-	target_include_directories(${FFMPEG_CORE_NAME} INTERFACE "${MAGNUS_FFMPEG_IOS_ROOT}/include")
+	set(FFMPEG_LIB_PATH "${HAUMEA_FFMPEG_IOS_ROOT}/lib")
+	target_include_directories(${FFMPEG_CORE_NAME} INTERFACE "${HAUMEA_FFMPEG_IOS_ROOT}/include")
 else()
 # Detect OS
 if (WIN32 AND NOT MINGW)

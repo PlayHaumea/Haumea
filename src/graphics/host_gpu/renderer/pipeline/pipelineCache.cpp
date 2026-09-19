@@ -279,7 +279,7 @@ PipelineCache::CreateComputePipeline(ShaderComputeInputInfo&      input_info,
 
 	{
 		static const uint64_t wanted = [] {
-			const char* value = std::getenv("MAGNUS_DUMP_CS");
+			const char* value = std::getenv("HAUMEA_DUMP_CS");
 			return value != nullptr && value[0] != '\0'
 			           ? std::strtoull(value, nullptr, 0)
 			           : 0ull;
@@ -289,7 +289,7 @@ PipelineCache::CreateComputePipeline(ShaderComputeInputInfo&      input_info,
 			code_hash = (code_hash ^ word) * 0x100000001b3ull;
 		}
 		if (wanted != 0 && code_hash == wanted) {
-			std::printf("Magnus:Shader:Info: compute code_hash=0x%016llx spirv_words=%zu "
+			std::printf("Haumea:Shader:Info: compute code_hash=0x%016llx spirv_words=%zu "
 			            "local=%ux%ux%u buffers=%zu images=%zu samplers=%zu\n",
 			            static_cast<unsigned long long>(code_hash), cs_spirv.size(),
 			            std::max(cs_regs.cs_regs.num_thread_x, 1u),
@@ -298,7 +298,7 @@ PipelineCache::CreateComputePipeline(ShaderComputeInputInfo&      input_info,
 			            input_info.stage.program->info.buffers.size(),
 			            input_info.stage.program->info.images.size(),
 			            input_info.stage.program->info.samplers.size());
-			const char* dump_dir = std::getenv("MAGNUS_DUMP_DIR");
+			const char* dump_dir = std::getenv("HAUMEA_DUMP_DIR");
 			if (dump_dir != nullptr && dump_dir[0] != '\0') {
 				char path[1024] {};
 				std::snprintf(path, sizeof(path), "%s/cs_%016llx.spv", dump_dir,
@@ -307,9 +307,9 @@ PipelineCache::CreateComputePipeline(ShaderComputeInputInfo&      input_info,
 				if (file != nullptr) {
 					std::fwrite(cs_spirv.data(), sizeof(uint32_t), cs_spirv.size(), file);
 					std::fclose(file);
-					std::printf("Magnus:Shader:Info: wrote %s\n", path);
+					std::printf("Haumea:Shader:Info: wrote %s\n", path);
 				} else {
-					std::printf("Magnus:Shader:Error: cannot write %s errno=%d\n", path, errno);
+					std::printf("Haumea:Shader:Error: cannot write %s errno=%d\n", path, errno);
 				}
 			}
 			std::fflush(stdout);

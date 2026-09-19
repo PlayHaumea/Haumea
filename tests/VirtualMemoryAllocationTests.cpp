@@ -36,7 +36,7 @@ extern "C" bool StingerFixUnalignedFault(void*) {
 	return false;
 }
 
-namespace Magnus {
+namespace Haumea {
 uint64_t UnalignedAccessCount() {
 	return 0;
 }

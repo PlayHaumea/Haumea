@@ -632,14 +632,14 @@ add_library(kyty_emulator STATIC ${kyty_emulator_src}
 
 set(FEX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../FEX" CACHE PATH "FEX source tree")
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
-	message(FATAL_ERROR "Magnus supports iPhoneOS builds only")
+	message(FATAL_ERROR "Haumea supports iPhoneOS builds only")
 endif()
 set(FEX_BUILD_DEFAULT "${FEX_ROOT}/build-iphoneos")
 set(FEX_BUILD "${FEX_BUILD_DEFAULT}" CACHE PATH "FEX build tree")
 
 if(NOT EXISTS "${FEX_ROOT}/External/vixl/src")
 	message(FATAL_ERROR
-		"Magnus: FEX source is missing External/vixl/src under ${FEX_ROOT}")
+		"Haumea: FEX source is missing External/vixl/src under ${FEX_ROOT}")
 endif()
 
 target_include_directories(kyty_emulator PRIVATE
@@ -664,14 +664,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 	target_compile_definitions(kyty_emulator PRIVATE __IPHONEOS__=1)
 	target_sources(kyty_emulator PRIVATE "${KYTY_SOURCE_DIR}/ios/cache.cpp"
 		"${KYTY_SOURCE_DIR}/ios/embed.cpp")
-	set(MAGNUS_MOLTENVK_LIBRARY "" CACHE FILEPATH "MoltenVK iPhoneOS static library")
-	set(MAGNUS_MOLTENVK_INCLUDE_DIR "" CACHE PATH "MoltenVK header root")
-	target_include_directories(kyty_emulator PRIVATE "${MAGNUS_MOLTENVK_INCLUDE_DIR}")
-	if(NOT EXISTS "${MAGNUS_MOLTENVK_LIBRARY}")
-		message(FATAL_ERROR "MoltenVK iPhoneOS library not found: ${MAGNUS_MOLTENVK_LIBRARY}")
+	set(HAUMEA_MOLTENVK_LIBRARY "" CACHE FILEPATH "MoltenVK iPhoneOS static library")
+	set(HAUMEA_MOLTENVK_INCLUDE_DIR "" CACHE PATH "MoltenVK header root")
+	target_include_directories(kyty_emulator PRIVATE "${HAUMEA_MOLTENVK_INCLUDE_DIR}")
+	if(NOT EXISTS "${HAUMEA_MOLTENVK_LIBRARY}")
+		message(FATAL_ERROR "MoltenVK iPhoneOS library not found: ${HAUMEA_MOLTENVK_LIBRARY}")
 	endif()
-	if(NOT EXISTS "${MAGNUS_MOLTENVK_INCLUDE_DIR}/MoltenVK/mvk_private_api.h")
-		message(FATAL_ERROR "MoltenVK headers not found under: ${MAGNUS_MOLTENVK_INCLUDE_DIR}")
+	if(NOT EXISTS "${HAUMEA_MOLTENVK_INCLUDE_DIR}/MoltenVK/mvk_private_api.h")
+		message(FATAL_ERROR "MoltenVK headers not found under: ${HAUMEA_MOLTENVK_INCLUDE_DIR}")
 	endif()
 endif()
 

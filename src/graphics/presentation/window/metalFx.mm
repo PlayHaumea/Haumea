@@ -128,7 +128,7 @@ struct Chain {
 		    VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr(device, "vkExportMetalObjectsEXT"));
 		if (export_objects == nullptr) {
 			export_failed = true;
-			std::printf("Magnus:MetalFX:Warning: vkExportMetalObjectsEXT missing\n");
+			std::printf("Haumea:MetalFX:Warning: vkExportMetalObjectsEXT missing\n");
 			return false;
 		}
 		VkExportMetalDeviceInfoEXT device_info {VK_STRUCTURE_TYPE_EXPORT_METAL_DEVICE_INFO_EXT};
@@ -143,11 +143,11 @@ struct Chain {
 		mtl_queue  = queue_info.mtlCommandQueue;
 		if (mtl_device == nil || mtl_queue == nil) {
 			export_failed = true;
-			std::printf("Magnus:MetalFX:Warning: Metal object export failed\n");
+			std::printf("Haumea:MetalFX:Warning: Metal object export failed\n");
 			return false;
 		}
 		ready = true;
-		std::printf("Magnus:MetalFX:Info: chain ready device=%s\n", mtl_device.name.UTF8String);
+		std::printf("Haumea:MetalFX:Info: chain ready device=%s\n", mtl_device.name.UTF8String);
 		return true;
 	}
 
@@ -576,7 +576,7 @@ Frames Run(GraphicContext& graphics, CommandBuffer& command, VulkanImage& frame,
 		if (format == MTLPixelFormatInvalid) {
 			if (!g_chain.format_warned) {
 				g_chain.format_warned = true;
-				std::printf("Magnus:MetalFX:Warning: unsupported frame format=%d\n",
+				std::printf("Haumea:MetalFX:Warning: unsupported frame format=%d\n",
 				            static_cast<int>(frame.format));
 			}
 			return result;
@@ -714,7 +714,7 @@ void Reset() {}
 
 #endif
 
-extern "C" void magnus_set_metal_fx(bool spatial, bool temporal, bool frame_interpolation)
+extern "C" void haumea_set_metal_fx(bool spatial, bool temporal, bool frame_interpolation)
 {
 	Libs::Graphics::MetalFx::SetSettings(spatial, temporal, frame_interpolation);
 }

@@ -59,7 +59,7 @@ void Initialize() {
 		case Config::ProfilerDirection::Network:
 			if (!tracy::ProfilerAvailable()) {
 				tracy::StartupProfiler();
-				TracySetProgramName("MagnusPS5");
+				TracySetProgramName("Haumea");
 				::printf("Tracy profiler enabled: client %d.%d.%d, protocol %u, "
 				         "broadcast %u, connect to 127.0.0.1:8086\n",
 				         tracy::Version::Major, tracy::Version::Minor, tracy::Version::Patch,

@@ -24,7 +24,7 @@
 #include <system_error>
 #include <thread>
 
-namespace Magnus {
+namespace Haumea {
 bool InstallStinger(const char* title_path);
 bool ReserveStingerRuntime();
 const char* StingerRuntimeFailure();
@@ -38,30 +38,30 @@ extern "C" uint64_t FEXBackendCompileMicroseconds();
 
 namespace {
 
-std::atomic<int> g_state {MAGNUS_STOPPED};
+std::atomic<int> g_state {HAUMEA_STOPPED};
 std::atomic<const char*> g_boot_failure {nullptr};
 std::atomic_bool g_booted_once {false};
 
 uint32_t PadBit(int button) {
 	using namespace Libs::Controller;
 	switch (button) {
-		case MAGNUS_PAD_UP: return PAD_BUTTON_UP;
-		case MAGNUS_PAD_DOWN: return PAD_BUTTON_DOWN;
-		case MAGNUS_PAD_LEFT: return PAD_BUTTON_LEFT;
-		case MAGNUS_PAD_RIGHT: return PAD_BUTTON_RIGHT;
-		case MAGNUS_PAD_CROSS: return PAD_BUTTON_CROSS;
-		case MAGNUS_PAD_CIRCLE: return PAD_BUTTON_CIRCLE;
-		case MAGNUS_PAD_SQUARE: return PAD_BUTTON_SQUARE;
-		case MAGNUS_PAD_TRIANGLE: return PAD_BUTTON_TRIANGLE;
-		case MAGNUS_PAD_L1: return PAD_BUTTON_L1;
-		case MAGNUS_PAD_R1: return PAD_BUTTON_R1;
-		case MAGNUS_PAD_L2: return PAD_BUTTON_L2;
-		case MAGNUS_PAD_R2: return PAD_BUTTON_R2;
-		case MAGNUS_PAD_OPTIONS: return PAD_BUTTON_OPTIONS;
-		case MAGNUS_PAD_SHARE: return PAD_BUTTON_SHARE;
-		case MAGNUS_PAD_L3: return PAD_BUTTON_L3;
-		case MAGNUS_PAD_R3: return PAD_BUTTON_R3;
-		case MAGNUS_PAD_TOUCH_PAD: return PAD_BUTTON_TOUCH_PAD;
+		case HAUMEA_PAD_UP: return PAD_BUTTON_UP;
+		case HAUMEA_PAD_DOWN: return PAD_BUTTON_DOWN;
+		case HAUMEA_PAD_LEFT: return PAD_BUTTON_LEFT;
+		case HAUMEA_PAD_RIGHT: return PAD_BUTTON_RIGHT;
+		case HAUMEA_PAD_CROSS: return PAD_BUTTON_CROSS;
+		case HAUMEA_PAD_CIRCLE: return PAD_BUTTON_CIRCLE;
+		case HAUMEA_PAD_SQUARE: return PAD_BUTTON_SQUARE;
+		case HAUMEA_PAD_TRIANGLE: return PAD_BUTTON_TRIANGLE;
+		case HAUMEA_PAD_L1: return PAD_BUTTON_L1;
+		case HAUMEA_PAD_R1: return PAD_BUTTON_R1;
+		case HAUMEA_PAD_L2: return PAD_BUTTON_L2;
+		case HAUMEA_PAD_R2: return PAD_BUTTON_R2;
+		case HAUMEA_PAD_OPTIONS: return PAD_BUTTON_OPTIONS;
+		case HAUMEA_PAD_SHARE: return PAD_BUTTON_SHARE;
+		case HAUMEA_PAD_L3: return PAD_BUTTON_L3;
+		case HAUMEA_PAD_R3: return PAD_BUTTON_R3;
+		case HAUMEA_PAD_TOUCH_PAD: return PAD_BUTTON_TOUCH_PAD;
 		default: return 0;
 	}
 }
@@ -73,7 +73,7 @@ bool SetDataDirectory() {
 	}
 
 	const auto data =
-	    std::filesystem::path(home) / "Library" / "Application Support" / "MagnusPS5";
+	    std::filesystem::path(home) / "Library" / "Application Support" / "Haumea";
 	Common::File::CreateDirectories(data);
 	std::error_code error;
 	std::filesystem::current_path(data, error);
@@ -81,28 +81,28 @@ bool SetDataDirectory() {
 }
 
 void BootThread(std::filesystem::path app0) {
-	if (!Magnus::ReserveStingerRuntime()) {
-		const char* reason = Magnus::StingerRuntimeFailure();
+	if (!Haumea::ReserveStingerRuntime()) {
+		const char* reason = Haumea::StingerRuntimeFailure();
 		g_boot_failure = reason != nullptr ? reason : "the recompiler runtime is not available";
-		::printf("Magnus:Stinger:Error: runtime reservation failed, refusing to boot: %s\n",
+		::printf("Haumea:Stinger:Error: runtime reservation failed, refusing to boot: %s\n",
 		         g_boot_failure.load());
 		g_booted_once = false;
-		g_state = MAGNUS_STOPPED;
+		g_state = HAUMEA_STOPPED;
 		return;
 	}
 
 	Common::VirtualMemory::Init();
 	Common::InitializeThreads();
 
-	if (!Magnus::InstallStinger(app0.string().c_str())) {
+	if (!Haumea::InstallStinger(app0.string().c_str())) {
 		g_boot_failure = "the recompiler could not load this game";
-		::printf("Magnus:Stinger:Error: install failed, refusing to boot\n");
-		g_state = MAGNUS_STOPPED;
+		::printf("Haumea:Stinger:Error: install failed, refusing to boot\n");
+		g_state = HAUMEA_STOPPED;
 		return;
 	}
 
 	Emulator::RunOptions options;
-	options.config.printf_direction = ::getenv("MAGNUS_VERBOSE") != nullptr
+	options.config.printf_direction = ::getenv("HAUMEA_VERBOSE") != nullptr
 	                                      ? Config::OutputDirection::Console
 	                                      : Config::OutputDirection::Silent;
 
@@ -117,47 +117,47 @@ void BootThread(std::filesystem::path app0) {
 	options.app0_dir = app0;
 	options.elf      = "/app0/eboot.bin";
 
-	g_state = MAGNUS_RUNNING;
+	g_state = HAUMEA_RUNNING;
 	Emulator::Run(options);
 	g_boot_failure = "the game stopped running";
-	::printf("Magnus:Boot:Info: emulator returned, game stopped\n");
-	g_state = MAGNUS_STOPPED;
+	::printf("Haumea:Boot:Info: emulator returned, game stopped\n");
+	g_state = HAUMEA_STOPPED;
 }
 
 }
 
-void magnus_set_surface(void* metal_layer, uint32_t width, uint32_t height) {
+void haumea_set_surface(void* metal_layer, uint32_t width, uint32_t height) {
 	Libs::Graphics::SetExternalSurface(metal_layer, width, height);
 }
 
-void magnus_set_paused(bool paused) {
+void haumea_set_paused(bool paused) {
 	Libs::Graphics::SetAppPaused(paused);
 }
 
-void magnus_set_vblank_frequency(uint32_t hz) {
+void haumea_set_vblank_frequency(uint32_t hz) {
 	Config::SetVblankFrequency(hz);
 }
 
-void magnus_set_volume(int percent) {
+void haumea_set_volume(int percent) {
 	Libs::Audio::SetMasterVolume(percent);
 }
 
-bool magnus_boot_game(const char* path) {
+bool haumea_boot_game(const char* path) {
 	if (path == nullptr) {
 		return false;
 	}
 
 	bool already = false;
 	if (!g_booted_once.compare_exchange_strong(already, true)) {
-		g_boot_failure = "Magnus runs one game per launch. Close Magnus and open it again to "
+		g_boot_failure = "Haumea runs one game per launch. Close Haumea and open it again to "
 		                 "play another.";
-		::printf("Magnus:Boot:Error: refused, this process already booted a game\n");
+		::printf("Haumea:Boot:Error: refused, this process already booted a game\n");
 		return false;
 	}
 
-	int expected = MAGNUS_STOPPED;
-	if (!g_state.compare_exchange_strong(expected, MAGNUS_LOADING)) {
-		::printf("Magnus:Boot:Error: refused, a game is already loaded state=%d\n", expected);
+	int expected = HAUMEA_STOPPED;
+	if (!g_state.compare_exchange_strong(expected, HAUMEA_LOADING)) {
+		::printf("Haumea:Boot:Error: refused, a game is already loaded state=%d\n", expected);
 		return false;
 	}
 	g_boot_failure = nullptr;
@@ -169,14 +169,14 @@ bool magnus_boot_game(const char* path) {
 
 	if (!Common::File::IsFileExisting(app0 / "eboot.bin")) {
 		g_boot_failure = "this game folder has no eboot.bin";
-		::printf("Magnus:Boot:Error: no eboot file=eboot.bin\n");
-		g_state = MAGNUS_STOPPED;
+		::printf("Haumea:Boot:Error: no eboot file=eboot.bin\n");
+		g_state = HAUMEA_STOPPED;
 		return false;
 	}
 	if (!SetDataDirectory()) {
 		g_boot_failure = "the emulator could not open its data folder";
-		::printf("Magnus:Boot:Error: data directory unavailable\n");
-		g_state = MAGNUS_STOPPED;
+		::printf("Haumea:Boot:Error: data directory unavailable\n");
+		g_state = HAUMEA_STOPPED;
 		return false;
 	}
 
@@ -184,38 +184,38 @@ bool magnus_boot_game(const char* path) {
 	return true;
 }
 
-int magnus_state() {
+int haumea_state() {
 	return g_state.load();
 }
 
-const char* magnus_boot_failure() {
+const char* haumea_boot_failure() {
 	return g_boot_failure.load();
 }
 
-uint64_t magnus_guest_frames() {
+uint64_t haumea_guest_frames() {
 	return Libs::Graphics::GuestFrameCount();
 }
 
-void magnus_set_shader_cache_dir(const char* path) {
+void haumea_set_shader_cache_dir(const char* path) {
 	Libs::Graphics::SetPipelineCacheFolder(path);
 }
 
-void magnus_set_screen_size(int mode) {
+void haumea_set_screen_size(int mode) {
 	Config::SetScreenSize(mode);
 }
 
-void magnus_set_network_enabled(bool enabled) {
+void haumea_set_network_enabled(bool enabled) {
 	Libs::Network::NetCtl::SetNetworkEnabled(enabled);
 }
 
-void magnus_stats(struct MagnusStats* out) {
+void haumea_stats(struct HaumeaStats* out) {
 	if (out == nullptr) {
 		return;
 	}
 	out->guest_frames        = Libs::Graphics::GuestFrameCount();
-	out->unaligned           = Magnus::UnalignedAccessCount();
-	out->segv                = Magnus::GuestFaultCount(SIGSEGV);
-	out->bus                 = Magnus::GuestFaultCount(SIGBUS);
+	out->unaligned           = Haumea::UnalignedAccessCount();
+	out->segv                = Haumea::GuestFaultCount(SIGSEGV);
+	out->bus                 = Haumea::GuestFaultCount(SIGBUS);
 	out->compiled_blocks     = FEXCompiledBlockCount();
 	out->frontend_compile_us = FEXFrontendCompileMicroseconds();
 	out->backend_compile_us  = FEXBackendCompileMicroseconds();
@@ -224,22 +224,22 @@ void magnus_stats(struct MagnusStats* out) {
 	out->pipeline_create_us = Libs::Graphics::PipelineGetCreateMicroseconds();
 }
 
-int magnus_pad_port_count() {
+int haumea_pad_port_count() {
 	return Libs::Controller::PAD_PORT_MAX;
 }
 
-void magnus_pad_connected(int port, bool connected) {
+void haumea_pad_connected(int port, bool connected) {
 	using namespace Libs::Controller;
-	if (g_state.load() == MAGNUS_STOPPED || port < 0 || port >= PAD_PORT_MAX) {
+	if (g_state.load() == HAUMEA_STOPPED || port < 0 || port >= PAD_PORT_MAX) {
 		return;
 	}
 
 	ControllerSetPortConnected(port, connected);
 }
 
-void magnus_pad_button(int port, int button, bool down) {
+void haumea_pad_button(int port, int button, bool down) {
 	using namespace Libs::Controller;
-	if (g_state.load() == MAGNUS_STOPPED || port < 0 || port >= PAD_PORT_MAX) {
+	if (g_state.load() == HAUMEA_STOPPED || port < 0 || port >= PAD_PORT_MAX) {
 		return;
 	}
 
@@ -253,9 +253,9 @@ void magnus_pad_button(int port, int button, bool down) {
 	}
 }
 
-void magnus_pad_touch(int port, bool down, float x, float y) {
+void haumea_pad_touch(int port, bool down, float x, float y) {
 	using namespace Libs::Controller;
-	if (g_state.load() == MAGNUS_STOPPED || port < 0 || port >= PAD_PORT_MAX) {
+	if (g_state.load() == HAUMEA_STOPPED || port < 0 || port >= PAD_PORT_MAX) {
 		return;
 	}
 
@@ -269,10 +269,10 @@ void magnus_pad_touch(int port, bool down, float x, float y) {
 	                static_cast<uint16_t>(clamped_y * touch_height));
 }
 
-void magnus_pad_axis(int port, int axis, int value) {
+void haumea_pad_axis(int port, int axis, int value) {
 	using namespace Libs::Controller;
-	if (g_state.load() == MAGNUS_STOPPED || port < 0 || port >= PAD_PORT_MAX || axis < 0 ||
-	    axis > MAGNUS_AXIS_RIGHT_Y) {
+	if (g_state.load() == HAUMEA_STOPPED || port < 0 || port >= PAD_PORT_MAX || axis < 0 ||
+	    axis > HAUMEA_AXIS_RIGHT_Y) {
 		return;
 	}
 
@@ -280,13 +280,13 @@ void magnus_pad_axis(int port, int axis, int value) {
 	               value < 0 ? 0 : (value > 255 ? 255 : value));
 }
 
-void magnus_mic_push(const int16_t* frames, uint32_t count) {
-	if (g_state.load() == MAGNUS_STOPPED) {
+void haumea_mic_push(const int16_t* frames, uint32_t count) {
+	if (g_state.load() == HAUMEA_STOPPED) {
 		return;
 	}
 	Libs::Audio::AudioIn::CapturePush(frames, count);
 }
 
-void magnus_mic_stop(void) {
+void haumea_mic_stop(void) {
 	Libs::Audio::AudioIn::CaptureReset();
 }

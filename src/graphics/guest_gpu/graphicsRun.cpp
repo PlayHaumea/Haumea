@@ -66,7 +66,7 @@ static bool GraphicsRunDebugDumpEnabled() {
 }
 
 static bool DrawAuditEnabled() {
-	static const bool enabled = std::getenv("MAGNUS_DRAW_AUDIT") != nullptr;
+	static const bool enabled = std::getenv("HAUMEA_DRAW_AUDIT") != nullptr;
 	return enabled;
 }
 
@@ -957,7 +957,7 @@ void CommandProcessor::DrawIndirect(uint32_t data_offset, uint32_t draw_initiato
 		static std::atomic<uint64_t> seen {0};
 		const uint64_t n = seen.fetch_add(1, std::memory_order_relaxed) + 1;
 		if (n <= 64 || (n % 512) == 0) {
-			std::printf("Magnus:DrawInd:Info: single indexed=%d gpu_args=%d addr=0x%016llx "
+			std::printf("Haumea:DrawInd:Info: single indexed=%d gpu_args=%d addr=0x%016llx "
 			            "n=%llu args=[%u %u %u %u %u]\n",
 			            indexed ? 1 : 0, gpu ? 1 : 0,
 			            static_cast<unsigned long long>(addr),
@@ -1067,7 +1067,7 @@ void CommandProcessor::DrawIndirectMulti(uint32_t data_offset, uint32_t max_coun
 		static std::atomic<uint64_t> seen {0};
 		const uint64_t n = seen.fetch_add(1, std::memory_order_relaxed) + 1;
 		if (n <= 64 || (n % 512) == 0) {
-			std::printf("Magnus:DrawInd:Info: multi indexed=%d has_count=%d gpu_count=%d gpu_args=%d "
+			std::printf("Haumea:DrawInd:Info: multi indexed=%d has_count=%d gpu_count=%d gpu_args=%d "
 			            "n=%llu max=%u draw_count=%u\n",
 			            indexed ? 1 : 0, count_addr != nullptr ? 1 : 0, gpu_count ? 1 : 0,
 			            gpu_args ? 1 : 0, static_cast<unsigned long long>(n), max_count_or_count,
@@ -1247,7 +1247,7 @@ void CommandProcessor::DispatchIndirect(uint32_t data_offset, uint32_t mode) {
 		                          ? indirect_zero.fetch_add(1, std::memory_order_relaxed) + 1
 		                          : indirect_zero.load(std::memory_order_relaxed);
 		if (seen < 16 || (seen % 4096) == 0) {
-			std::printf("Magnus:Dispatch:Info: indirect seen=%llu zero=%llu groups=%ux%ux%u "
+			std::printf("Haumea:Dispatch:Info: indirect seen=%llu zero=%llu groups=%ux%ux%u "
 			            "mode=0x%08x args=0x%016llx cs=0x%016llx\n",
 			            static_cast<unsigned long long>(seen + 1),
 			            static_cast<unsigned long long>(zero), args->thread_group_x,

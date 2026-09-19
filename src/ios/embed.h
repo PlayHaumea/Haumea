@@ -11,40 +11,40 @@
 extern "C" {
 #endif
 
-enum MagnusState {
-	MAGNUS_STOPPED = 0,
-	MAGNUS_LOADING = 1,
-	MAGNUS_RUNNING = 2,
+enum HaumeaState {
+	HAUMEA_STOPPED = 0,
+	HAUMEA_LOADING = 1,
+	HAUMEA_RUNNING = 2,
 };
 
-enum MagnusPadButton {
-	MAGNUS_PAD_UP = 0,
-	MAGNUS_PAD_DOWN,
-	MAGNUS_PAD_LEFT,
-	MAGNUS_PAD_RIGHT,
-	MAGNUS_PAD_CROSS,
-	MAGNUS_PAD_CIRCLE,
-	MAGNUS_PAD_SQUARE,
-	MAGNUS_PAD_TRIANGLE,
-	MAGNUS_PAD_L1,
-	MAGNUS_PAD_R1,
-	MAGNUS_PAD_L2,
-	MAGNUS_PAD_R2,
-	MAGNUS_PAD_OPTIONS,
-	MAGNUS_PAD_SHARE,
-	MAGNUS_PAD_L3,
-	MAGNUS_PAD_R3,
-	MAGNUS_PAD_TOUCH_PAD,
+enum HaumeaPadButton {
+	HAUMEA_PAD_UP = 0,
+	HAUMEA_PAD_DOWN,
+	HAUMEA_PAD_LEFT,
+	HAUMEA_PAD_RIGHT,
+	HAUMEA_PAD_CROSS,
+	HAUMEA_PAD_CIRCLE,
+	HAUMEA_PAD_SQUARE,
+	HAUMEA_PAD_TRIANGLE,
+	HAUMEA_PAD_L1,
+	HAUMEA_PAD_R1,
+	HAUMEA_PAD_L2,
+	HAUMEA_PAD_R2,
+	HAUMEA_PAD_OPTIONS,
+	HAUMEA_PAD_SHARE,
+	HAUMEA_PAD_L3,
+	HAUMEA_PAD_R3,
+	HAUMEA_PAD_TOUCH_PAD,
 };
 
-enum MagnusPadAxis {
-	MAGNUS_AXIS_LEFT_X = 0,
-	MAGNUS_AXIS_LEFT_Y,
-	MAGNUS_AXIS_RIGHT_X,
-	MAGNUS_AXIS_RIGHT_Y,
+enum HaumeaPadAxis {
+	HAUMEA_AXIS_LEFT_X = 0,
+	HAUMEA_AXIS_LEFT_Y,
+	HAUMEA_AXIS_RIGHT_X,
+	HAUMEA_AXIS_RIGHT_Y,
 };
 
-struct MagnusStats {
+struct HaumeaStats {
 	uint64_t guest_frames;
 	uint64_t unaligned;
 	uint64_t segv;
@@ -57,36 +57,36 @@ struct MagnusStats {
 	uint64_t pipeline_create_us;
 };
 
-void magnus_stats(struct MagnusStats* out);
+void haumea_stats(struct HaumeaStats* out);
 
-void magnus_set_shader_cache_dir(const char* path);
+void haumea_set_shader_cache_dir(const char* path);
 
-void magnus_set_network_enabled(bool enabled);
+void haumea_set_network_enabled(bool enabled);
 
-void magnus_set_surface(void* metal_layer, uint32_t width, uint32_t height);
-void magnus_set_paused(bool paused);
+void haumea_set_surface(void* metal_layer, uint32_t width, uint32_t height);
+void haumea_set_paused(bool paused);
 
-void magnus_set_metal_fx(bool spatial, bool temporal, bool frame_interpolation);
-void magnus_set_vblank_frequency(uint32_t hz);
+void haumea_set_metal_fx(bool spatial, bool temporal, bool frame_interpolation);
+void haumea_set_vblank_frequency(uint32_t hz);
 
-void magnus_set_screen_size(int mode);
-void magnus_set_volume(int percent);
+void haumea_set_screen_size(int mode);
+void haumea_set_volume(int percent);
 
-bool magnus_boot_game(const char* path);
+bool haumea_boot_game(const char* path);
 
-int      magnus_state(void);
-uint64_t magnus_guest_frames(void);
+int      haumea_state(void);
+uint64_t haumea_guest_frames(void);
 
-const char* magnus_boot_failure(void);
+const char* haumea_boot_failure(void);
 
-int  magnus_pad_port_count(void);
-void magnus_pad_connected(int port, bool connected);
-void magnus_pad_button(int port, int button, bool down);
-void magnus_pad_axis(int port, int axis, int value);
-void magnus_pad_touch(int port, bool down, float x, float y);
+int  haumea_pad_port_count(void);
+void haumea_pad_connected(int port, bool connected);
+void haumea_pad_button(int port, int button, bool down);
+void haumea_pad_axis(int port, int axis, int value);
+void haumea_pad_touch(int port, bool down, float x, float y);
 
-void magnus_mic_push(const int16_t* frames, uint32_t count);
-void magnus_mic_stop(void);
+void haumea_mic_push(const int16_t* frames, uint32_t count);
+void haumea_mic_stop(void);
 
 #ifdef __cplusplus
 }
