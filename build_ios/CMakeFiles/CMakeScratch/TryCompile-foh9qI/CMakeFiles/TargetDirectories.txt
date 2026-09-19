@@ -1,0 +1,2 @@
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/ALL_BUILD.dir

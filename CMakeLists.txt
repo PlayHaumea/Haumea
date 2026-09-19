@@ -689,6 +689,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 		MACOSX_BUNDLE_BUNDLE_NAME "Haumea"
 		XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${KYTY_SOURCE_DIR}/ios/App/Bridging-Header.h"
 		XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+		XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${KYTY_SOURCE_DIR}/ios/App/Haumea.entitlements"
 	)
 	target_link_libraries(HaumeaApp PRIVATE kyty_emulator "-framework SwiftUI" "-framework Metal" "-framework QuartzCore" "${HAUMEA_MOLTENVK_LIBRARY}")
 endif()

@@ -1,0 +1,2 @@
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios_verify/CMakeFiles/CMakeScratch/TryCompile-XeQeq0/CMakeFiles/cmTC_60472.dir
+/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios_verify/CMakeFiles/CMakeScratch/TryCompile-XeQeq0/CMakeFiles/ALL_BUILD.dir

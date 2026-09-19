@@ -1,0 +1,551 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		A04D9C3C2B12B1B8F82B8473 /* ALL_BUILD */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 410F39A610644545B527C8E7 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildPhases = (
+				B3FCC2BB79AF698ADD4EDC91 /* Generate CMakeFiles/ALL_BUILD */,
+			);
+			dependencies = (
+				25DB0D0C4BD3470EB3A07D1E /* PBXTargetDependency */,
+			);
+			name = ALL_BUILD;
+			productName = ALL_BUILD;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		3B737CD878EB4770BB77F1F9 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist */ = {isa = PBXBuildFile; fileRef = 2D675761324D48519EF794B9 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist */; };
+		93BB5D23DA3340C685D52256 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 1578F823989D44B7B3DB7466 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeLists.txt */; };
+		B19DD969D26E4333A21AA95C /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CheckIncludeFile.c */ = {isa = PBXBuildFile; fileRef = 5C2887CCCF534DC7ABD4C890 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CheckIncludeFile.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildStyle section */
+		B560C150082F44A2B6F8A038 /* Debug */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
+		D3F73F0483504D60B18800AA /* Release */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Release;
+		};
+		D66EF090BE344696928DFD36 /* RelWithDebInfo */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = RelWithDebInfo;
+		};
+		E42277C60ABD4259911871F7 /* MinSizeRel */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = MinSizeRel;
+		};
+/* End PBXBuildStyle section */
+
+/* Begin PBXContainerItemProxy section */
+		C36D8870B3EE45918E2EF93A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 296915D509904843955FE028 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D8CE8A2E54AEE31CB3FABA87;
+			remoteInfo = cmTC_25cee;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		1578F823989D44B7B3DB7466 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		18E8A9AB55384A6CBB209505 /* cmTC_25cee */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = cmTC_25cee; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D675761324D48519EF794B9 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist */ = {isa = PBXFileReference; explicitFileType = sourcecode.text.plist; fileEncoding = 4; name = Info.plist; path = CMakeFiles/cmTC_25cee.dir/Info.plist; sourceTree = SOURCE_ROOT; };
+		5C2887CCCF534DC7ABD4C890 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CheckIncludeFile.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = CheckIncludeFile.c; path = CheckIncludeFile.c; sourceTree = SOURCE_ROOT; };
+		98E888AECB784E5A9C0728C4 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		45AC79EB324D410B944CD5FB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		21BE3B7352D440DA88987869 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		2AD4D72C0FFF4E7188B7C192 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2E1C585D3002420AABA4C4D1 = {
+			isa = PBXGroup;
+			children = (
+				FA779D9487F348418BA05AB3 /* ALL_BUILD */,
+				397C50E5A6C042E6953E044A /* cmTC_25cee */,
+				AF9A350C3E7D44019FFE5155 /* Products */,
+				2AD4D72C0FFF4E7188B7C192 /* Frameworks */,
+				4C55310EEA834E048A9ABFD9 /* Resources */,
+			);
+			sourceTree = "<group>";
+		};
+		397C50E5A6C042E6953E044A /* cmTC_25cee */ = {
+			isa = PBXGroup;
+			children = (
+				F1927CCC509340EB95A2BCF4 /* Resources */,
+				CA1C4E8283374EDC9CE714B0 /* Source Files */,
+				1578F823989D44B7B3DB7466 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeLists.txt */,
+			);
+			name = cmTC_25cee;
+			sourceTree = "<group>";
+		};
+		4C55310EEA834E048A9ABFD9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		AF9A350C3E7D44019FFE5155 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				18E8A9AB55384A6CBB209505 /* cmTC_25cee */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CA1C4E8283374EDC9CE714B0 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				5C2887CCCF534DC7ABD4C890 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CheckIncludeFile.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		F1927CCC509340EB95A2BCF4 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2D675761324D48519EF794B9 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		FA779D9487F348418BA05AB3 /* ALL_BUILD */ = {
+			isa = PBXGroup;
+			children = (
+				21BE3B7352D440DA88987869 /* CMake Rules */,
+				98E888AECB784E5A9C0728C4 /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeLists.txt */,
+			);
+			name = ALL_BUILD;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D8CE8A2E54AEE31CB3FABA87 /* cmTC_25cee */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 277AA995E6434469926210DB /* Build configuration list for PBXNativeTarget "cmTC_25cee" */;
+			buildPhases = (
+				E0DEDCE4DA5D469CA72873BF /* Sources */,
+				45AC79EB324D410B944CD5FB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = cmTC_25cee;
+			productName = cmTC_25cee;
+			productReference = 18E8A9AB55384A6CBB209505 /* cmTC_25cee */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		296915D509904843955FE028 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = FB675A23015F4C5A84B3F7F9 /* Build configuration list for PBXProject "CMAKE_TRY_COMPILE" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				B560C150082F44A2B6F8A038 /* Debug */,
+				D3F73F0483504D60B18800AA /* Release */,
+				E42277C60ABD4259911871F7 /* MinSizeRel */,
+				D66EF090BE344696928DFD36 /* RelWithDebInfo */,
+			);
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 0;
+			mainGroup = 2E1C585D3002420AABA4C4D1;
+			projectDirPath = .;
+			projectRoot = "";
+			targets = (
+				A04D9C3C2B12B1B8F82B8473 /* ALL_BUILD */,
+				D8CE8A2E54AEE31CB3FABA87 /* cmTC_25cee */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		9B50530E35CC49C82C2FACCF = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		B3FCC2BB79AF698ADD4EDC91 /* Generate CMakeFiles/ALL_BUILD */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ALL_BUILD";
+			outputPaths = (
+"/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/ALL_BUILD"			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI
+  echo Build\\ all\\ projects
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E0DEDCE4DA5D469CA72873BF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B19DD969D26E4333A21AA95C /* /Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CheckIncludeFile.c */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		25DB0D0C4BD3470EB3A07D1E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D8CE8A2E54AEE31CB3FABA87 /* cmTC_25cee */;
+			targetProxy = C36D8870B3EE45918E2EF93A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1F27C5D8F893482B85A642C2 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build";
+			};
+			name = RelWithDebInfo;
+		};
+		320E5B3779774476925B9EF2 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/RelWithDebInfo";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INFOPLIST_FILE = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist";
+				INSTALL_PATH = "";
+				OTHER_CFLAGS = ("  -fno-rtti -fno-exceptions -fcolor-diagnostics -finput-charset=UTF-8 -fexec-charset=UTF-8    -fno-strict-aliasing -fno-omit-frame-pointer -Wall -fmessage-length=0 -idirafter \"/Users/davi/Documents/Git/PlayHaumea/Haumea/3rdparty/SDL2/src/video/khronos\"  -D_GNU_SOURCE=1        -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" '-Wl,-search_paths_first' '-Wl,-headerpad_max_install_names'","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = cmTC_25cee;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build/cmTC_25cee.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		7AC9D5F199D44FD095902359 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		7DD6239E4A1740628D40F93D /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/MinSizeRel";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INFOPLIST_FILE = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist";
+				INSTALL_PATH = "";
+				OTHER_CFLAGS = ("  -fno-rtti -fno-exceptions -fcolor-diagnostics -finput-charset=UTF-8 -fexec-charset=UTF-8    -fno-strict-aliasing -fno-omit-frame-pointer -Wall -fmessage-length=0 -idirafter \"/Users/davi/Documents/Git/PlayHaumea/Haumea/3rdparty/SDL2/src/video/khronos\"  -D_GNU_SOURCE=1     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" '-Wl,-search_paths_first' '-Wl,-headerpad_max_install_names'","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = cmTC_25cee;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build/cmTC_25cee.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		894B23E67F9B489FB0B0F4E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		9FD86CC712A94EC28CF55AA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		A5FA6C21B72F47028C3FAD64 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build";
+			};
+			name = MinSizeRel;
+		};
+		BE8F7460F1474C0D88277CC5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/Release";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INFOPLIST_FILE = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist";
+				INSTALL_PATH = "";
+				OTHER_CFLAGS = ("  -fno-rtti -fno-exceptions -fcolor-diagnostics -finput-charset=UTF-8 -fexec-charset=UTF-8    -fno-strict-aliasing -fno-omit-frame-pointer -Wall -fmessage-length=0 -idirafter \"/Users/davi/Documents/Git/PlayHaumea/Haumea/3rdparty/SDL2/src/video/khronos\"  -D_GNU_SOURCE=1     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" '-Wl,-search_paths_first' '-Wl,-headerpad_max_install_names'","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = cmTC_25cee;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build/cmTC_25cee.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		CD6D35EA80954CC79B32172D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build";
+			};
+			name = Release;
+		};
+		D568DE1226904A099BB169CA /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		FDB2314126F84912B5B6C480 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/Debug";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INFOPLIST_FILE = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/CMakeFiles/cmTC_25cee.dir/Info.plist";
+				INSTALL_PATH = "";
+				OTHER_CFLAGS = ("  -fno-rtti -fno-exceptions -fcolor-diagnostics -finput-charset=UTF-8 -fexec-charset=UTF-8    -fno-strict-aliasing -fno-omit-frame-pointer -Wall -fmessage-length=0 -idirafter \"/Users/davi/Documents/Git/PlayHaumea/Haumea/3rdparty/SDL2/src/video/khronos\"  -D_GNU_SOURCE=1    ","$(inherited)");
+				OTHER_LDFLAGS = (" '-Wl,-search_paths_first' '-Wl,-headerpad_max_install_names'","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = cmTC_25cee;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build/cmTC_25cee.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		FEBC5B352AA4425291C20CA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SYMROOT = "/Users/davi/Documents/Git/PlayHaumea/Haumea/build_ios/CMakeFiles/CMakeScratch/TryCompile-foh9qI/build";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		277AA995E6434469926210DB /* Build configuration list for PBXNativeTarget "cmTC_25cee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FDB2314126F84912B5B6C480 /* Debug */,
+				BE8F7460F1474C0D88277CC5 /* Release */,
+				7DD6239E4A1740628D40F93D /* MinSizeRel */,
+				320E5B3779774476925B9EF2 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		410F39A610644545B527C8E7 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				894B23E67F9B489FB0B0F4E0 /* Debug */,
+				9FD86CC712A94EC28CF55AA5 /* Release */,
+				7AC9D5F199D44FD095902359 /* MinSizeRel */,
+				D568DE1226904A099BB169CA /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FB675A23015F4C5A84B3F7F9 /* Build configuration list for PBXProject "CMAKE_TRY_COMPILE" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FEBC5B352AA4425291C20CA5 /* Debug */,
+				CD6D35EA80954CC79B32172D /* Release */,
+				A5FA6C21B72F47028C3FAD64 /* MinSizeRel */,
+				1F27C5D8F893482B85A642C2 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 296915D509904843955FE028 /* Project object */;
+}
