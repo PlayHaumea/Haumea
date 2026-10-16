@@ -627,6 +627,16 @@ if(BUILD_TESTING)
 endif()
 
 
+if(APPLE AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	# macOS x86-64 (Rosetta): the host runs guest code itself, so neither the Stinger bridge nor
+	# FEX is part of this build.
+	add_library(kyty_emulator STATIC ${kyty_emulator_src})
+	configure_macos_guest_address_space(kyty_emulator)
+	add_executable(haumea-mac "${KYTY_SOURCE_DIR}/mac/main.cpp")
+	target_include_directories(haumea-mac PRIVATE ${inc_headers})
+	target_link_libraries(haumea-mac PRIVATE kyty_emulator)
+	configure_macos_guest_address_space(haumea-mac)
+else()
 add_library(kyty_emulator STATIC ${kyty_emulator_src}
 	"${CMAKE_CURRENT_SOURCE_DIR}/../../Source/Stinger/Bridge.cpp")
 
@@ -692,6 +702,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 		XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${KYTY_SOURCE_DIR}/ios/App/Haumea.entitlements"
 	)
 	target_link_libraries(HaumeaApp PRIVATE kyty_emulator "-framework SwiftUI" "-framework Metal" "-framework QuartzCore" "${HAUMEA_MOLTENVK_LIBRARY}")
+endif()
 endif()
 
 target_link_libraries(kyty_emulator ${kyty_emulator_link_libraries})

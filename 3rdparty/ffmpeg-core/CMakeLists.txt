@@ -39,11 +39,17 @@ else ()
 endif()
 
 # Compute current short git commit SHA
+# Vendored here rather than a submodule, so HEAD is this repository's commit: KYTY_FFMPEG_SHA names
+# the ext-ffmpeg-core release to use instead.
+if(KYTY_FFMPEG_SHA)
+	set(FFMPEG_GIT_SHA "${KYTY_FFMPEG_SHA}")
+else()
 execute_process(
 	COMMAND git rev-parse --short HEAD
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	OUTPUT_VARIABLE FFMPEG_GIT_SHA
 	OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
 
 # Download prebuilt ffmpeg
 set(FFMPEG_ZIP_PATH "${CMAKE_BINARY_DIR}/externals/ffmpeg-${FFMPEG_GIT_SHA}.zip")
