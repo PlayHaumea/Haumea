@@ -977,6 +977,9 @@ std::uint64_t importBudget(const Context& context) {
     for (std::uint32_t index = 0; index < context.memory.memoryHeapCount; ++index) {
         if ((context.memory.memoryHeaps[index].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) == 0) hostHeap = std::max<std::uint64_t>(hostHeap, context.memory.memoryHeaps[index].size);
     }
+    // Unified memory (every heap device-local, as on Apple GPUs): an import is the guest's own pages,
+    // so it costs no memory beyond them and needs no budget.
+    if (hostHeap == 0 && context.memory.memoryHeapCount != 0) return std::numeric_limits<std::uint64_t>::max() / 2;
     const auto fromMemory = std::max<std::uint64_t>(6144ull << 20u, physicalMemoryBytes() / 2);
     constexpr std::uint64_t reserve = 2048ull << 20u;
     return hostHeap > reserve ? std::min(fromMemory, hostHeap - reserve) : fromMemory;
@@ -2791,6 +2794,36 @@ void GuestBufferMemory::AcquireRegistered() {
             validate(range->address, range->bytes);
             Region region{range->address, range->address + range->bytes, range->writable, {}, nullptr};
             const HostImport* entry = nullptr;
+            // Larger than the device allocates at once (4 GiB under MoltenVK, which has no sparse
+            // binding): imported as windows that each get their own table range.
+            if (importable && context.maxAllocationBytes != 0 && range->bytes > context.maxAllocationBytes && !context.sparseBinding) {
+                const auto window = std::bit_floor(static_cast<std::uint64_t>(context.maxAllocationBytes));
+                std::vector<Region> windows;
+                {
+                    auto& state = Imports();
+                    std::lock_guard lock(state.mutex);
+                    for (auto begin = range->address; begin < range->address + range->bytes;) {
+                        // Measured from the allocation like windowRun's cells, so neighbouring windows never merge.
+                        const auto end = std::min(range->address + range->bytes, begin + window);
+                        const auto* part = importAllocation(context, state, begin, lease, end, false);
+                        if (part == nullptr) {
+                            windows.clear();
+                            break;
+                        }
+                        Region piece{begin, end, range->writable, {}, nullptr};
+                        piece.hostBacked = true;
+                        piece.direct = part;
+                        windows.push_back(std::move(piece));
+                        begin = end;
+                    }
+                }
+                lap(timing.importsUs, at);
+                if (!windows.empty()) {
+                    for (auto& piece : windows) regions.push_back(std::move(piece));
+                    imported.push_back(range->address);
+                    continue;
+                }
+            }
             if (importable) {
                 auto& state = Imports();
                 std::lock_guard lock(state.mutex);
