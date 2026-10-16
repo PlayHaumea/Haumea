@@ -73,6 +73,9 @@ int main() {
 #ifndef _WIN32
     std::filesystem::create_directory_symlink("Data", directory / "Linked");
     CheckRead("linked/SETTINGS.INI", 'x');
+#ifndef __APPLE__
+    // Two names differing only in case need a case-sensitive host file system; APFS is
+    // case-insensitive by default.
     { std::ofstream file(directory / "Data" / "SETTINGS.INI"); file << 'z'; }
     CheckRead("Data/Settings.ini", 'x');
     CheckRead("Data/SETTINGS.INI", 'z');
@@ -83,6 +86,7 @@ int main() {
     std::filesystem::remove(directory / "Data" / "Settings.ini");
     { std::ofstream file(directory / "Data" / "SETTINGS.ini"); file << 'n'; }
     CheckRead("data/settings.ini", 'n');
+#endif
     std::filesystem::create_symlink("absent", directory / "Dangling");
     Require(sceKernelOpen("dangling", SCE_KERNEL_O_RDONLY, 0) == static_cast<int>(0x80020002u));
 #endif

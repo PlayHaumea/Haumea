@@ -967,22 +967,56 @@ int APS5_VABI sceKernelGetdirentries(int fd, char* buf, int nbytes, int64_t* bas
     const off_t base = ::lseek(fd, 0, SEEK_CUR);
     if (base < 0) return SceErrorFromErrno(errno);
     if (basep != nullptr) *basep = static_cast<int64_t>(base);
-    std::vector<char> host(static_cast<std::size_t>(nbytes) < 4096 ? 4096 : static_cast<std::size_t>(nbytes));
 #if defined(__APPLE__)
-    off_t hostBase = base;
-    const auto read = __getdirentries64(fd, host.data(), host.size(), &hostBase);
+    // APFS gives every entry a d_seekoff of 0 and leaves an opaque cookie as the directory offset,
+    // so an entry cannot be resumed from. The offset holds the index of the next entry instead:
+    // each call reads the directory from the start and skips that many entries.
+    if (::lseek(fd, 0, SEEK_SET) < 0) return SceErrorFromErrno(errno);
+    std::vector<char> host(16384);
+    std::size_t written = 0;
+    off_t index = 0;
+    off_t next = base;
+    for (bool full = false; !full;) {
+        off_t hostBase = 0;
+        const auto read = __getdirentries64(fd, host.data(), host.size(), &hostBase);
+        if (read < 0) return SceErrorFromErrno(errno);
+        if (read == 0) break;
+        for (long offset = 0; offset < read; offset += reinterpret_cast<const struct dirent*>(host.data() + offset)->d_reclen) {
+            const auto* entry = reinterpret_cast<const struct dirent*>(host.data() + offset);
+            if (index++ < base) continue;
+            const auto nameLength = std::strlen(entry->d_name);
+            const auto record = (GuestHeaderBytes + nameLength + 1 + 3) & ~std::size_t{3};
+            if (nameLength > GuestMaxName || written + record > static_cast<std::size_t>(nbytes)) {
+                if (written == 0) {
+                    ::lseek(fd, base, SEEK_SET);
+                    return nameLength > GuestMaxName ? static_cast<int>(0x80020000u | GUEST_ENAMETOOLONG) : SceErrorFromErrno(GUEST_EINVAL);
+                }
+                full = true;
+                break;
+            }
+            char* out = buf + written;
+            std::memset(out, 0, record);
+            const auto fileNumber = static_cast<std::uint32_t>(entry->d_ino);
+            const auto recordLength = static_cast<std::uint16_t>(record);
+            std::memcpy(out, &fileNumber, sizeof(fileNumber));
+            std::memcpy(out + 4, &recordLength, sizeof(recordLength));
+            out[6] = static_cast<char>(entry->d_type);
+            out[7] = static_cast<char>(nameLength);
+            std::memcpy(out + GuestHeaderBytes, entry->d_name, nameLength);
+            written += record;
+            next = index;
+        }
+    }
+    if (::lseek(fd, next, SEEK_SET) < 0) return SceErrorFromErrno(errno);
+    return static_cast<int>(written);
 #else
+    std::vector<char> host(static_cast<std::size_t>(nbytes) < 4096 ? 4096 : static_cast<std::size_t>(nbytes));
     const auto read = ::syscall(SYS_getdents64, fd, host.data(), host.size());
-#endif
     if (read < 0) return SceErrorFromErrno(errno);
     std::size_t written = 0;
     off_t resume = base;
     for (long offset = 0; offset < read;) {
-#if defined(__APPLE__)
-        const auto* entry = reinterpret_cast<const struct dirent*>(host.data() + offset);
-#else
         const auto* entry = reinterpret_cast<const struct dirent64*>(host.data() + offset);
-#endif
         const auto nameLength = std::strlen(entry->d_name);
         const auto record = (GuestHeaderBytes + nameLength + 1 + 3) & ~std::size_t{3};
         if (nameLength > GuestMaxName || written + record > static_cast<std::size_t>(nbytes)) {
@@ -1001,15 +1035,12 @@ int APS5_VABI sceKernelGetdirentries(int fd, char* buf, int nbytes, int64_t* bas
         out[7] = static_cast<char>(nameBytes);
         std::memcpy(out + GuestHeaderBytes, entry->d_name, nameLength);
         written += record;
-#if defined(__APPLE__)
-        resume = static_cast<off_t>(entry->d_seekoff);
-#else
         resume = entry->d_off;
-#endif
         offset += entry->d_reclen;
     }
     if (::lseek(fd, resume, SEEK_SET) < 0) return SceErrorFromErrno(errno);
     return static_cast<int>(written);
+#endif
 }
 
 int APS5_VABI sceKernelGetdents(int fd, char* buf, int nbytes) {
@@ -1171,6 +1202,9 @@ int64_t APS5_VABI sceKernelPwrite(int d, const void* buf, size_t nbytes, int64_t
 
 int64_t APS5_VABI sceKernelReadv(int d, const KernelIovec* iov, int iovcnt) {
     if (const int error = CheckIovecs(iov, iovcnt)) return error;
+#ifdef __APPLE__
+    if (iovcnt == 0) return 0;  // Darwin's readv family rejects an empty vector with EINVAL
+#endif
     std::deque<GuestArena::HostWrite> destinations;
     if (!OpenIovecs(iov, iovcnt, destinations)) return SceErrorFromErrno(GUEST_EFAULT);
     if (GuestSockets::IsOpen(d)) {
@@ -1184,6 +1218,9 @@ int64_t APS5_VABI sceKernelReadv(int d, const KernelIovec* iov, int iovcnt) {
 
 int64_t APS5_VABI sceKernelWritev(int d, const KernelIovec* iov, int iovcnt) {
     if (const int error = CheckIovecs(iov, iovcnt)) return error;
+#ifdef __APPLE__
+    if (iovcnt == 0) return 0;  // Darwin's readv family rejects an empty vector with EINVAL
+#endif
     if (GuestSockets::IsOpen(d)) {
         const auto result = GuestSockets::Writev(d, reinterpret_cast<const GuestSockets::Iovec*>(iov), iovcnt);
         return result < 0 ? SceKernelError(*__error_nid_postfix()) : result;
@@ -1197,6 +1234,9 @@ int64_t APS5_VABI sceKernelWritev(int d, const KernelIovec* iov, int iovcnt) {
 int64_t APS5_VABI sceKernelPreadv(int d, const KernelIovec* iov, int iovcnt, int64_t offset) {
     if (const int error = CheckIovecs(iov, iovcnt)) return error;
     if (offset < 0) return SceErrorFromErrno(GUEST_EINVAL);
+#ifdef __APPLE__
+    if (iovcnt == 0) return 0;  // Darwin's readv family rejects an empty vector with EINVAL
+#endif
     if (const auto error = PositionedGuestSocketError(d); error != 0) return error;
     std::deque<GuestArena::HostWrite> destinations;
     if (!OpenIovecs(iov, iovcnt, destinations)) return SceErrorFromErrno(GUEST_EFAULT);
@@ -1208,6 +1248,9 @@ int64_t APS5_VABI sceKernelPreadv(int d, const KernelIovec* iov, int iovcnt, int
 int64_t APS5_VABI sceKernelPwritev(int d, const KernelIovec* iov, int iovcnt, int64_t offset) {
     if (const int error = CheckIovecs(iov, iovcnt)) return error;
     if (offset < 0) return SceErrorFromErrno(GUEST_EINVAL);
+#ifdef __APPLE__
+    if (iovcnt == 0) return 0;  // Darwin's readv family rejects an empty vector with EINVAL
+#endif
     if (const auto error = PositionedGuestSocketError(d); error != 0) return error;
     const auto sharedResult = File::PwritevSharedMemory_nid_no_patch(d, NativeIovecs(iov), iovcnt, offset);
     if (sharedResult != -2) return sharedResult < 0 ? SceErrorFromErrno(errno) : sharedResult;
