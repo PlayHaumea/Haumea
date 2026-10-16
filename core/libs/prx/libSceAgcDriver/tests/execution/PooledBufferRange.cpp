@@ -51,6 +51,8 @@ public:
     Device() {
 #ifdef _WIN32
         library = SDL_LoadObject("vulkan-1.dll");
+#elif defined(__APPLE__)
+        library = SDL_LoadObject("libMoltenVK.dylib");
 #else
         library = SDL_LoadObject("libvulkan.so.1");
 #endif

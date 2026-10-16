@@ -3,6 +3,9 @@
 #include "prx/libc/include/GuestAllocations.hpp"
 #include "prx/libc/include/GuestArena.hpp"
 #include "prx/libc/include/GuestWriteWatch.hpp"
+#ifdef __APPLE__
+#include "prx/libc/include/specifics/linux/HostMapping.hpp"
+#endif
 #include <algorithm>
 #include <cerrno>
 #include <iterator>
@@ -177,6 +180,9 @@ void* MapAtOrAbove(std::uintptr_t start, size_t len, int prot, size_t alignment)
     constexpr std::uintptr_t UserLimit = 0x7fff00000000ull;
     for (int attempt = 0; attempt < 8; ++attempt) {
         std::vector<std::pair<std::uintptr_t, std::uintptr_t>> used;
+#if defined(__APPLE__)
+        for (const auto& region : HostMapping::Regions()) used.emplace_back(region.start, region.end);
+#else
         std::ifstream maps("/proc/self/maps");
         std::string line;
         while (std::getline(maps, line)) {
@@ -185,6 +191,7 @@ void* MapAtOrAbove(std::uintptr_t start, size_t len, int prot, size_t alignment)
             char dash = 0;
             if (fields >> std::hex >> begin >> dash >> end) used.emplace_back(begin, end);
         }
+#endif
         std::sort(used.begin(), used.end());
         auto candidate = (start + alignment - 1) & ~(static_cast<std::uintptr_t>(alignment) - 1);
         for (const auto& [begin, end] : used) {

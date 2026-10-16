@@ -10,8 +10,14 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <libproc.h>
+#include <mach/mach.h>
+#include <mach/mach_vm.h>
+#endif
 #if __has_include(<linux/fs.h>)
 #include <linux/fs.h>
 #endif
@@ -49,6 +55,32 @@ struct Mapping {
     std::uint64_t end;
     std::string path;
 };
+
+#ifdef __APPLE__
+struct Region {
+    std::uint64_t start;
+    std::uint64_t end;
+    bool readable;
+    bool writable;
+    bool executable;
+};
+
+// Every VM region of this task in address order: Darwin's stand-in for /proc/self/maps.
+inline std::vector<Region> Regions() {
+    std::vector<Region> regions;
+    mach_vm_address_t address = 0;
+    for (;;) {
+        mach_vm_size_t size = 0;
+        vm_region_basic_info_data_64_t info{};
+        mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+        mach_port_t object = MACH_PORT_NULL;
+        if (mach_vm_region(mach_task_self(), &address, &size, VM_REGION_BASIC_INFO_64, reinterpret_cast<vm_region_info_t>(&info), &count, &object) != KERN_SUCCESS) break;
+        regions.push_back({address, address + size, (info.protection & VM_PROT_READ) != 0, (info.protection & VM_PROT_WRITE) != 0, (info.protection & VM_PROT_EXECUTE) != 0});
+        address += size;
+    }
+    return regions;
+}
+#endif
 
 inline int QueryFd() {
     static const int fd = [] {
@@ -88,6 +120,19 @@ inline std::optional<Mapping> ScanMaps(std::uint64_t address, const char* caller
 }
 
 inline std::optional<Mapping> Find(std::uint64_t address, const char* caller) {
+#ifdef __APPLE__
+    // Darwin has no /proc: Mach names the region and libproc the file mapped into it.
+    static_cast<void>(caller);
+    mach_vm_address_t start = address;
+    mach_vm_size_t size = 0;
+    vm_region_basic_info_data_64_t info{};
+    mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+    mach_port_t object = MACH_PORT_NULL;
+    if (mach_vm_region(mach_task_self(), &start, &size, VM_REGION_BASIC_INFO_64, reinterpret_cast<vm_region_info_t>(&info), &count, &object) != KERN_SUCCESS || start > address) return std::nullopt;
+    char path[PROC_PIDPATHINFO_MAXSIZE] = {};
+    const int length = proc_regionfilename(getpid(), address, path, sizeof(path));
+    return Mapping{start, start + size, length > 0 ? std::string(path, static_cast<std::size_t>(length)) : std::string()};
+#endif
     const int fd = QueryFd();
     if (fd < 0) return ScanMaps(address, caller);
     char name[4096] = {};

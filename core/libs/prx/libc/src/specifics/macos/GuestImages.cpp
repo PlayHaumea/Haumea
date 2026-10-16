@@ -6,6 +6,7 @@
 #include <mach-o/loader.h>
 #include <atomic>
 #include <cstring>
+#include <vector>
 
 namespace {
 
@@ -23,6 +24,32 @@ constexpr std::size_t LoadBiasOffset = 0x08;
 constexpr std::size_t HeaderCountOffset = 0x58;
 constexpr std::size_t HeadersOffset = 0x60;
 
+// A main executable that was not relinked (a host test, for example) is reported from its Mach-O
+// segments, as Linux reports any executable's program headers.
+std::vector<Elf64_Phdr> SegmentHeaders(const mach_header_64* header) {
+    std::vector<Elf64_Phdr> headers;
+    const auto* command = reinterpret_cast<const load_command*>(header + 1);
+    for (std::uint32_t index = 0; index < header->ncmds; ++index) {
+        if (command->cmd == LC_SEGMENT_64) {
+            const auto* segment = reinterpret_cast<const segment_command_64*>(command);
+            if (segment->vmsize != 0 && segment->initprot != 0) {
+                Elf64_Phdr phdr{};
+                phdr.p_type = 1;
+                phdr.p_flags = ((segment->initprot & VM_PROT_READ) ? 4u : 0u) | ((segment->initprot & VM_PROT_WRITE) ? 2u : 0u) | ((segment->initprot & VM_PROT_EXECUTE) ? 1u : 0u);
+                phdr.p_offset = segment->fileoff;
+                phdr.p_vaddr = segment->vmaddr;
+                phdr.p_paddr = segment->vmaddr;
+                phdr.p_filesz = segment->filesize;
+                phdr.p_memsz = segment->vmsize;
+                phdr.p_align = 0x1000;
+                headers.push_back(phdr);
+            }
+        }
+        command = reinterpret_cast<const load_command*>(reinterpret_cast<const std::uint8_t*>(command) + command->cmdsize);
+    }
+    return headers;
+}
+
 }
 
 extern "C" int dl_iterate_phdr(int (*callback)(dl_phdr_info*, std::size_t, void*), void* data) {
@@ -31,6 +58,18 @@ extern "C" int dl_iterate_phdr(int (*callback)(dl_phdr_info*, std::size_t, void*
         if (header == nullptr || header->magic != MH_MAGIC_64 || (header->flags & MH_DYLIB_IN_CACHE) != 0) continue;
         unsigned long size = 0;
         const auto* meta = getsectiondata(header, "__APS5DATA", "__meta", &size);
+        if ((meta == nullptr || size < HeadersOffset) && header->filetype == MH_EXECUTE) {
+            static const std::vector<Elf64_Phdr> segments = SegmentHeaders(header);
+            dl_phdr_info info {};
+            info.dlpi_addr = static_cast<std::uintptr_t>(_dyld_get_image_vmaddr_slide(index));
+            info.dlpi_name = "";
+            info.dlpi_phdr = segments.data();
+            info.dlpi_phnum = static_cast<std::uint16_t>(segments.size());
+            info.dlpi_adds = imagesAdded.load();
+            info.dlpi_subs = imagesRemoved.load();
+            if (const int result = callback(&info, sizeof(info), data); result != 0) return result;
+            continue;
+        }
         if (meta == nullptr || size < HeadersOffset) continue;
         std::uint64_t version;
         std::uint64_t loadBias;

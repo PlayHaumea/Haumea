@@ -1,5 +1,6 @@
 #if defined(__APPLE__)
 #include <mach/mach.h>
+#include <crt_externs.h>
 #endif
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -91,6 +92,11 @@ public:
             if (_wputenv_s(L"ANYPS5_LOADEXEC_ARGV_SKIP", L"") != 0 || !SetEnvironmentVariableW(L"ANYPS5_LOADEXEC_ARGV_SKIP", nullptr))
                 throw std::runtime_error("LoadExec: cannot clear the argument marker");
         }
+#elif defined(__APPLE__)
+        const int count = *_NSGetArgc();
+        char** const values = *_NSGetArgv();
+        for (int index = 0; index < count; ++index)
+            arguments.emplace_back(values[index]);
 #else
         std::ifstream stream("/proc/self/cmdline", std::ios::binary);
         if (!stream)

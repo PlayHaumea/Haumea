@@ -7,6 +7,9 @@
 #include "prx/libkernel/DirectMemory/DirectMemory.hpp"
 #include "prx/libkernel/AppMetadata/include/ParamJsonParser.hpp"
 #include "prx/libkernel/Pthread/include/Pthread.hpp"
+#ifdef __APPLE__
+#include "prx/libc/include/specifics/linux/HostMapping.hpp"
+#endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #ifndef NOMINMAX
@@ -341,6 +344,19 @@ int APS5_VABI sceKernelVirtualQuery(const void* addr, int flags, VirtualQueryInf
  info->end = info->start + host.RegionSize;
  const bool writable = (host.Protect & (PAGE_READWRITE | PAGE_EXECUTE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_WRITECOPY)) != 0;
  const bool executable = (host.Protect & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)) != 0;
+ #elif defined(__APPLE__)
+ bool found = false, writable = false, executable = false;
+ for (const auto& region : HostMapping::Regions()) {
+  if (address < region.start || address >= region.end) continue;
+  if (!region.readable) return SCE_KERNEL_ERROR_EACCES;
+  info->start = region.start;
+  info->end = region.end;
+  writable = region.writable;
+  executable = region.executable;
+  found = true;
+  break;
+ }
+ if (!found) return SCE_KERNEL_ERROR_EACCES;
  #else
  std::ifstream maps("/proc/self/maps");
  std::string line;

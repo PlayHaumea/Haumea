@@ -1,5 +1,9 @@
 #include "prx/libSceAgcDriver/Execution/include/ProfileOutput.hpp"
 #include "prx/libSceAgcDriver/Execution/include/GuestMemory.hpp"
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <mach/mach_vm.h>
+#endif
 #include "prx/libSceAgcDriver/Execution/include/PerformanceTrace.hpp"
 #include "prx/libSceAgcDriver/Execution/include/WriteWatchCoverage.hpp"
 #include "ThreadOwned.hpp"
@@ -568,6 +572,38 @@ bool describePages(std::uintptr_t address, std::size_t bytes, Emit&& emit) {
             constexpr auto mask = static_cast<std::uintptr_t>(PageBytes - 1);
             pages.record(cursor & ~mask, (next + mask) & ~mask, readable, writable, generation);
         };
+#ifdef __APPLE__
+        {
+            // Darwin has no /proc: ask Mach for the region covering the cursor, or the next one.
+            mach_vm_address_t regionStart = cursor;
+            mach_vm_size_t regionSize = 0;
+            vm_region_basic_info_data_64_t info{};
+            mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+            mach_port_t object = MACH_PORT_NULL;
+            const auto status = mach_vm_region(mach_task_self(), &regionStart, &regionSize, VM_REGION_BASIC_INFO_64, reinterpret_cast<vm_region_info_t>(&info), &count, &object);
+            if (status == KERN_INVALID_ADDRESS) {
+                static_cast<void>(emit(PageRun{cursor, end, false, false}));
+                return true;
+            }
+            if (status != KERN_SUCCESS || regionSize == 0) return false;
+            const auto regionBegin = static_cast<std::uintptr_t>(regionStart);
+            const auto regionEnd = static_cast<std::uintptr_t>(regionStart + regionSize);
+            if (regionEnd <= cursor) return false;
+            if (regionBegin > cursor) {
+                const auto gapEnd = std::min<std::uintptr_t>(end, regionBegin);
+                if (!emit(PageRun{cursor, gapEnd, false, false})) return true;
+                cursor = gapEnd;
+                continue;
+            }
+            const bool readable = (info.protection & VM_PROT_READ) != 0;
+            const bool writable = readable && (info.protection & VM_PROT_WRITE) != 0;
+            const auto next = std::min<std::uintptr_t>(end, regionEnd);
+            recordRun(next, readable, writable);
+            if (!emit(PageRun{cursor, next, readable, writable})) return true;
+            cursor = next;
+            continue;
+        }
+#else
         if (const int fd = HostMapping::QueryFd(); fd >= 0) {
             procmap_query query{};
             query.size = sizeof(query);
@@ -627,6 +663,7 @@ bool describePages(std::uintptr_t address, std::size_t bytes, Emit&& emit) {
             static_cast<void>(emit(PageRun{cursor, end, false, false}));
             return true;
         }
+#endif
 #endif
     }
     return true;

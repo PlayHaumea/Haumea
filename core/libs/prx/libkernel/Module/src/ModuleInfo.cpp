@@ -116,9 +116,15 @@ std::string ImageName(const dl_phdr_info& image) {
     std::string path = image.dlpi_name ? image.dlpi_name : "";
     if (path.empty()) {
         char executable[4096];
+#ifdef __APPLE__
+        std::uint32_t size = sizeof(executable);
+        if (_NSGetExecutablePath(executable, &size) != 0) throw std::runtime_error("sceKernelGetModuleInfoFromAddr: cannot resolve the executable path");
+        path = executable;
+#else
         const auto length = ::readlink("/proc/self/exe", executable, sizeof(executable) - 1);
         if (length < 0) throw std::runtime_error("sceKernelGetModuleInfoFromAddr: cannot resolve the executable path");
         path.assign(executable, static_cast<std::size_t>(length));
+#endif
     }
     return ModuleName(path.substr(path.find_last_of('/') + 1));
 }

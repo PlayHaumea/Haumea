@@ -1,4 +1,7 @@
 #include "prx/libSceAgcDriver/Execution/include/ProfileOutput.hpp"
+#ifdef __APPLE__
+#include <dlfcn.h>
+#endif
 #include "prx/libSceAgcDriver/Execution/include/FrameDumpIo.hpp"
 #include "prx/libSceAgcDriver/Graphics/include/PipelineSpecialization.hpp"
 #include "prx/libSceAgcDriver/Execution/include/CaptureTrace.hpp"
@@ -929,6 +932,12 @@ ComputePipelineReplayResult VulkanDevice::ReplayComputePipeline(const ComputePip
     return result;
 }
 
+#ifdef __APPLE__
+namespace {
+void VulkanDeviceLibraryAnchor() {}
+}
+#endif
+
 VulkanDevice::VulkanDevice(const PresentationWindow* window) : VulkanDevice(window, false) {}
 
 VulkanDevice::VulkanDevice(CompileOnly) : VulkanDevice(nullptr, true) {}
@@ -938,6 +947,19 @@ VulkanDevice::VulkanDevice(const PresentationWindow* window, bool compileOnly) :
     APS5_LOG_OUT("VulkanDevice constructor window=%p", static_cast<const void*>(window));
 #ifdef _WIN32
     state->library = SDL_LoadObject("vulkan-1.dll");
+#elif defined(__APPLE__)
+    // A Vulkan loader if one is installed, else MoltenVK shipped beside the system libraries.
+    state->library = SDL_LoadObject("libvulkan.1.dylib");
+    if (state->library == nullptr) {
+        Dl_info self{};
+        if (dladdr(reinterpret_cast<const void*>(&VulkanDeviceLibraryAnchor), &self) != 0 && self.dli_fname != nullptr) {
+            std::string path = self.dli_fname;
+            path = path.substr(0, path.find_last_of('/') + 1) + "libMoltenVK.dylib";
+            state->library = SDL_LoadObject(path.c_str());
+        }
+    }
+#elif defined(__APPLE__)
+    state->library = SDL_LoadObject("libMoltenVK.dylib");
 #else
     state->library = SDL_LoadObject("libvulkan.so.1");
 #endif
@@ -1170,6 +1192,8 @@ VulkanDevice::VulkanDevice(const PresentationWindow* window, bool compileOnly) :
     }
     std::vector<const char*> deviceExtensions;
     if (window != nullptr) deviceExtensions.assign(presentationExtensions.begin(), presentationExtensions.end());
+    // Required whenever the device exposes it (MoltenVK).
+    if (hasExtension("VK_KHR_portability_subset")) deviceExtensions.push_back("VK_KHR_portability_subset");
     if (window != nullptr && hasExtension(VK_EXT_HDR_METADATA_EXTENSION_NAME)) {
         deviceExtensions.push_back(VK_EXT_HDR_METADATA_EXTENSION_NAME);
         state->hdrMetadata = true;
