@@ -252,6 +252,17 @@ private:
 
     std::jthread presentThread;
     std::jthread vblankThread;
+#ifdef __APPLE__
+    // When the main thread serves jobs (DarwinGuestStart.cpp), SDL and the present loop run there,
+    // since Cocoa windows only work on the main thread.
+    struct MainThreadPresent {
+        std::stop_source stop;
+        std::promise<void> finished;
+        std::thread::id thread;
+    };
+    std::unique_ptr<MainThreadPresent> mainPresent;
+    void startOnMainThread();
+#endif
 };
 
 #endif

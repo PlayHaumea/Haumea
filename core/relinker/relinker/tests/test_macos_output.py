@@ -100,8 +100,13 @@ def check_structure(name, data):
     check(any(n.startswith("__ELF") for n in names) and "__APS5DATA" in names, f"{name}: image segments missing")
     zero = macho.segment("__PAGEZERO")
     check(zero["vmaddr"] == 0 and zero["vmsize"] == IMAGE_BASE and zero["initprot"] == 0, f"{name}: bad __PAGEZERO")
+    reserve = macho.segment("__APS5RESV")
+    check(reserve["vmaddr"] == 0x200000000 and reserve["vmsize"] == 0xC00000000 and reserve["filesize"] == 0 and reserve["initprot"] == 0 and reserve["maxprot"] == 0,
+          f"{name}: bad guest arena reserve {reserve}")
     expected = IMAGE_BASE
     for segment in macho.segments[1:]:
+        if segment["name"] == "__APS5RESV":
+            continue
         check(segment["vmaddr"] == expected and segment["vmaddr"] % PAGE == 0 and segment["vmsize"] % PAGE == 0, f"{name}: {segment['name']} is not contiguous and page aligned")
         check(segment["fileoff"] + segment["filesize"] <= len(data), f"{name}: {segment['name']} runs past the end of the file")
         expected += segment["vmsize"]

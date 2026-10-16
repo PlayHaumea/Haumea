@@ -773,6 +773,11 @@ void converterWideStoreWindows() {
     expected.insert(expected.end(), halves.begin(), halves.end());
     require(entered.Trampolines.size() == 1 && entered.Trampolines[0].Offset == 0x200 && entered.Trampolines[0].Length == 8 && body(entered.Trampolines[0]) == expected, "A 256-bit store before a branch target did not take room from the instruction before it");
 
+    const auto beforeTls = convert(withStore({0x48, 0x89, 0x45, 0xD0}, {0x64, 0x48, 0x8B, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00, 0xC3}));
+    expected = {0x48, 0x89, 0x45, 0xD0};
+    expected.insert(expected.end(), halves.begin(), halves.end());
+    require(beforeTls.Trampolines.size() == 1 && beforeTls.Trampolines[0].Offset == 0x200 && beforeTls.Trampolines[0].Length == 8 && body(beforeTls.Trampolines[0]) == expected, "A 256-bit store before a %fs access moved the access instead of the instruction before it");
+
     Bytes adds;
     for (int index = 0; index < 4; ++index)
         adds.insert(adds.end(), {0x48, 0x83, 0xC1, 0x01});

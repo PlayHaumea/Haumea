@@ -268,7 +268,51 @@ VideoOutDriver& VideoOutDriver::Get() {
     return instance;
 }
 
+#ifdef __APPLE__
+extern "C" bool Aps5MainThreadServing_nid_no_patch();
+extern "C" void Aps5MainThreadPost_nid_no_patch(void (*function)(void*), void* context);
+
+void VideoOutDriver::startOnMainThread() {
+    mainPresent = std::make_unique<MainThreadPresent>();
+    struct Start {
+        VideoOutDriver* driver;
+        std::promise<void> started;
+    } start{this, {}};
+    auto attached = start.started.get_future();
+    Aps5MainThreadPost_nid_no_patch([](void* context) {
+        auto& start = *static_cast<Start*>(context);
+        auto& driver = *start.driver;
+        auto& present = *driver.mainPresent;
+        present.thread = std::this_thread::get_id();
+        if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
+            start.started.set_exception(std::make_exception_ptr(std::runtime_error(std::string("SDL_InitSubSystem(VIDEO | GAMECONTROLLER) failed: ") + SDL_GetError())));
+            present.finished.set_value();
+            return;
+        }
+        driver.presentLoop(present.stop.get_token(), start.started);
+        {
+            std::lock_guard lock(driver.mutex);
+            for (int handle = 1; handle < VIDEO_OUT_NUM_MAX; ++handle) {
+                if (driver.outputs[handle]) driver.close(handle);
+            }
+        }
+        SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
+        present.finished.set_value();
+    }, &start);
+    attached.get();
+}
+#endif
+
 VideoOutDriver::VideoOutDriver() {
+#ifdef __APPLE__
+    if (Aps5MainThreadServing_nid_no_patch()) {
+        AgcDriverWaitIdle_nid_postfix();
+        startOnMainThread();
+        vblankThread = std::jthread([this](std::stop_token token) { vblankLoop(token); });
+        LibcRegisterShutdown_nid_postfix([] { VideoOutDriver::Get().Shutdown(); });
+        return;
+    }
+#endif
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
 #ifdef _WIN32
     SDL_SetHintWithPriority(SDL_HINT_DIRECTINPUT_ENABLED, "0", SDL_HINT_DEFAULT);
@@ -319,6 +363,25 @@ void VideoOutDriver::Shutdown() {
     require(std::this_thread::get_id() != presentThread.get_id(), "presentation thread cannot stop itself");
     std::lock_guard shutdownLock(shutdownMutex);
     if (stopped) return;
+#ifdef __APPLE__
+    if (mainPresent) {
+        require(std::this_thread::get_id() != mainPresent->thread, "presentation thread cannot stop itself");
+        LibcRequestShutdown_nid_postfix();
+        {
+            std::lock_guard queueLock(flipQueue->mutex);
+            flipQueue->stopping = true;
+        }
+        mainPresent->stop.request_stop();
+        vblankThread.request_stop();
+        flipQueue->changed.NotifyAll();
+        mainPresent->finished.get_future().wait();
+        vblankThread.join();
+        stopped = true;
+        std::lock_guard lock(flipQueue->mutex);
+        if (flipQueue->failure) std::rethrow_exception(flipQueue->failure);
+        return;
+    }
+#endif
     LibcRequestShutdown_nid_postfix();
     {
         std::lock_guard queueLock(flipQueue->mutex);

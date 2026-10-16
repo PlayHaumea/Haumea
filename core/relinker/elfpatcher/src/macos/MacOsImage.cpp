@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <elfpatcher/macos/MacOsImage.hpp>
 #include <elfpatcher/windows/WindowsStubEmitter.hpp>
 #include <elfpatcher/windows/WindowsTrampolineBuilder.hpp>
@@ -44,6 +45,9 @@ constexpr std::uint32_t LcRpath = 0x8000001c;
 constexpr std::uint32_t LcDyldInfoOnly = 0x80000022;
 constexpr std::uint32_t LcMain = 0x80000028;
 constexpr std::uint32_t LcBuildVersion = 0x32;
+
+constexpr std::uint64_t GuestReserveStart = 0x200000000;
+constexpr std::uint64_t GuestReserveSize = 0xC00000000;
 
 constexpr std::uint32_t VmProtRead = 1;
 constexpr std::uint32_t VmProtWrite = 2;
@@ -374,8 +378,12 @@ std::vector<std::uint8_t> WriteMacOsImage(MacOsImageInput& input) {
         for (const auto& access : tls.Accesses) {
             for (const auto& site : *input.Trampolines) {
                 const auto siteRva = image.GetRva(site.Address, site.Length);
-                if (siteRva < access.Rva + access.Length && access.Rva < siteRva + site.Length)
-                    throw Domain::RelinkerException("AMD-only instruction is also a guest TLS access", siteRva);
+                if (siteRva < access.Rva + access.Length && access.Rva < siteRva + site.Length) {
+                    char detail[160];
+                    std::snprintf(detail, sizeof(detail), "AMD-only instruction at 0x%llx (+%u, rva 0x%x) overlaps the guest TLS access at rva 0x%x (+%u)",
+                        static_cast<unsigned long long>(site.Address), static_cast<unsigned>(site.Length), static_cast<unsigned>(siteRva), static_cast<unsigned>(access.Rva), static_cast<unsigned>(access.Length));
+                    throw Domain::RelinkerException(detail, siteRva);
+                }
             }
         }
         auto stubRva = Windows::AlignRva(image.GetEndRva());
@@ -650,6 +658,23 @@ std::vector<std::uint8_t> WriteMacOsImage(MacOsImageInput& input) {
         }
         ++commandCount;
     }
+    // Rosetta places the main thread's stack low, around 12 GB, inside the guest arena where titles map
+    // at fixed addresses (Astro Bot maps 0x300000000). A no-access segment over 8-56 GB moves it below the
+    // arena; the runtime replaces the segment with its own reservation (GuestArena.cpp). Past 56 GB macOS
+    // refuses to start the process, and 64-448 GB is a kernel guard no process can map.
+    std::size_t reserveCommand = 0;
+    if (input.Executable) {
+        reserveCommand = commands.size();
+        Io::AppendU32(commands, LcSegment64);
+        Io::AppendU32(commands, 72);
+        AppendName16(commands, "__APS5RESV");
+        for (int field = 0; field < 4; ++field) Io::AppendU64(commands, 0);
+        Io::AppendU32(commands, 0);
+        Io::AppendU32(commands, 0);
+        Io::AppendU32(commands, 0);
+        Io::AppendU32(commands, 0);
+        ++commandCount;
+    }
     const auto linkeditCommand = commands.size();
     Io::AppendU32(commands, LcSegment64);
     Io::AppendU32(commands, 72);
@@ -781,6 +806,11 @@ std::vector<std::uint8_t> WriteMacOsImage(MacOsImageInput& input) {
         }
     }
     writeSegment(linkeditCommand, ImageBase + imageEnd, AlignUp(linkeditSize, PageSize), linkeditOffset, linkeditSize);
+    if (input.Executable) {
+        if (ImageBase + imageEnd + AlignUp(linkeditSize, PageSize) > GuestReserveStart)
+            throw Domain::RelinkerException("macOS executable image reaches the guest arena reserve at 8 GiB");
+        writeSegment(reserveCommand, GuestReserveStart, GuestReserveSize, 0, 0);
+    }
     Io::WriteU32(commands, dyldInfoCommand + 8, static_cast<std::uint32_t>(rebaseOffset));
     Io::WriteU32(commands, dyldInfoCommand + 12, static_cast<std::uint32_t>(rebase.size()));
     Io::WriteU32(commands, dyldInfoCommand + 16, static_cast<std::uint32_t>(bindOffset));

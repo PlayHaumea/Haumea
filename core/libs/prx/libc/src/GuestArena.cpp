@@ -12,6 +12,8 @@
 #include <sys/mman.h>
 #endif
 #ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <mach-o/getsect.h>
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
 #endif
@@ -186,8 +188,19 @@ private:
     }
 
 #if defined(__APPLE__)
-    // Darwin has no /proc/self/maps; walk this task's VM regions instead.
+    // Darwin has no /proc/self/maps; walk this task's VM regions instead. A relinked executable carries
+    // an __APS5RESV segment over the low arena (MacOsImage.cpp) so that nothing else lands there before
+    // the arena exists; it is replaced in place by the arena's own reservation.
     void SeedLinuxUsedRanges() {
+        if (const auto* segment = getsegbyname("__APS5RESV"); segment != nullptr && segment->vmsize != 0) {
+            const auto start = static_cast<std::uintptr_t>(segment->vmaddr + _dyld_get_image_vmaddr_slide(0));
+            const auto end = start + static_cast<std::uintptr_t>(segment->vmsize);
+            if (start >= ArenaStart && end <= ApplicationAreaEnd &&
+                mmap(reinterpret_cast<void*>(start), end - start, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_FIXED, -1, 0) == reinterpret_cast<void*>(start)) {
+                _ownedStart = start;
+                _ownedEnd = end;
+            }
+        }
         mach_vm_address_t address = ArenaStart;
         for (;;) {
             mach_vm_size_t size = 0;
@@ -198,7 +211,7 @@ private:
             const auto begin = static_cast<std::uintptr_t>(address);
             const auto end = static_cast<std::uintptr_t>(address + size);
             if (begin >= ApplicationAreaEnd) break;
-            if (end > ArenaStart) {
+            if (end > ArenaStart && !(begin >= _ownedStart && end <= _ownedEnd)) {
                 const auto first = std::max(begin, ArenaStart);
                 const auto last = std::min(end, ApplicationAreaEnd);
                 _used.emplace(first, last);
@@ -268,14 +281,23 @@ private:
 
     void ReserveFreeRanges() {
         std::vector<std::pair<std::uintptr_t, std::uintptr_t>> occupied;
+        // The range already reserved from the executable's segment needs no second reservation.
+        const auto reserve = [&](std::uintptr_t from, std::uintptr_t to) {
+            if (_ownedStart < _ownedEnd && from < _ownedEnd && _ownedStart < to) {
+                if (from < _ownedStart) TryReserve(occupied, from, _ownedStart);
+                if (_ownedEnd < to) TryReserve(occupied, _ownedEnd, to);
+                return;
+            }
+            TryReserve(occupied, from, to);
+        };
         std::uintptr_t cursor = ArenaStart;
         for (const auto& [usedStart, usedEnd] : _used) {
             if (usedStart > ApplicationAreaEnd) break;
-            if (usedStart > cursor) TryReserve(occupied, cursor, std::min(usedStart, ApplicationAreaEnd));
+            if (usedStart > cursor) reserve(cursor, std::min(usedStart, ApplicationAreaEnd));
             if (usedEnd > cursor) cursor = usedEnd;
             if (cursor >= ApplicationAreaEnd) break;
         }
-        if (cursor < ApplicationAreaEnd) TryReserve(occupied, cursor, ApplicationAreaEnd);
+        if (cursor < ApplicationAreaEnd) reserve(cursor, ApplicationAreaEnd);
         for (const auto& [from, to] : occupied) {
             _used.emplace(from, to);
             _hostRegions.emplace_back(from, to);
@@ -283,6 +305,8 @@ private:
     }
 #endif
 
+    std::uintptr_t _ownedStart = 0;
+    std::uintptr_t _ownedEnd = 0;
     std::mutex _lock;
     std::map<std::uintptr_t, std::uintptr_t> _used;
     std::vector<std::pair<std::uintptr_t, std::uintptr_t>> _holes;

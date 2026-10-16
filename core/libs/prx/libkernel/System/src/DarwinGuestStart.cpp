@@ -9,7 +9,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <condition_variable>
 #include <cstring>
+#include <deque>
 #include <mutex>
 #include <random>
 
@@ -99,11 +101,90 @@ void* APS5_VABI Aps5GuestTlsGetAddr_nid_no_patch(const std::uint64_t* index) {
     return ThreadPointer(descriptor) - descriptor->blockSize + index[1];
 }
 
-// Called by the entry stub with the guest entry point and a SysV initial stack (argc, argv, envp).
-[[noreturn]] void Aps5StartGuest_nid_no_patch(void* entry, void* stack) {
-    reinterpret_cast<void (APS5_VABI*)(void*, void*)>(entry)(stack, nullptr);
+// Cocoa only works on the process's main thread, and SDL's video on macOS is Cocoa. The guest's
+// entry therefore runs on a thread of its own and the main thread serves jobs that must run on it,
+// such as the video output's window and present loop (VideoOutDriver.cpp).
+namespace {
+
+struct MainThreadJob {
+    void (*function)(void*);
+    void* context;
+};
+
+struct MainThreadQueue {
+    std::mutex mutex;
+    std::condition_variable changed;
+    std::deque<MainThreadJob> jobs;
+    bool serving = false;
+};
+
+MainThreadQueue& MainQueue() {
+    static auto* queue = new MainThreadQueue;
+    return *queue;
+}
+
+struct GuestStart {
+    void* entry;
+    void* stack;
+};
+
+constexpr std::size_t GuestMainStackBytes = std::size_t{64} << 20;
+
+void* RunGuestEntry(void* argument) {
+    const auto start = *static_cast<GuestStart*>(argument);
+    reinterpret_cast<void (APS5_VABI*)(void*, void*)>(start.entry)(start.stack, nullptr);
     std::fprintf(stderr, "[aps5] guest entry returned\n");
     std::exit(0);
+}
+
+}
+
+extern "C" bool Aps5MainThreadServing_nid_no_patch() {
+    auto& queue = MainQueue();
+    std::lock_guard lock(queue.mutex);
+    return queue.serving;
+}
+
+// Runs function(context) on the main thread without waiting for it. A long job (the present loop)
+// holds the main thread until it returns.
+extern "C" void Aps5MainThreadPost_nid_no_patch(void (*function)(void*), void* context) {
+    auto& queue = MainQueue();
+    {
+        std::lock_guard lock(queue.mutex);
+        queue.jobs.push_back({function, context});
+    }
+    queue.changed.notify_all();
+}
+
+// Called by the entry stub with the guest entry point and a SysV initial stack (argc, argv, envp).
+[[noreturn]] void Aps5StartGuest_nid_no_patch(void* entry, void* stack) {
+    static GuestStart start;
+    start = {entry, stack};
+    {
+        auto& queue = MainQueue();
+        std::lock_guard lock(queue.mutex);
+        queue.serving = true;
+    }
+    pthread_attr_t attributes;
+    pthread_attr_init(&attributes);
+    pthread_attr_setstacksize(&attributes, GuestMainStackBytes);
+    pthread_t guest;
+    if (const int error = pthread_create(&guest, &attributes, RunGuestEntry, &start); error != 0) {
+        std::fprintf(stderr, "[aps5] cannot start the guest thread: %s\n", std::strerror(error));
+        std::exit(1);
+    }
+    pthread_attr_destroy(&attributes);
+    auto& queue = MainQueue();
+    for (;;) {
+        MainThreadJob job{};
+        {
+            std::unique_lock lock(queue.mutex);
+            queue.changed.wait(lock, [&] { return !queue.jobs.empty(); });
+            job = queue.jobs.front();
+            queue.jobs.pop_front();
+        }
+        job.function(job.context);
+    }
 }
 
 }

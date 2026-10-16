@@ -108,8 +108,18 @@ private:
         return kind != ControlFlowKind::Sequential && kind != ControlFlowKind::ConditionalBranch;
     }
 
+    // An %fs or %gs access stays where it is: the macOS image rewrites guest TLS accesses in place,
+    // which a copy in a stub would escape.
+    [[nodiscard]] bool _segmentOverride(const std::size_t index) const {
+        for (const auto byte : _bytes(index)) {
+            if (byte == 0x64 || byte == 0x65) return true;
+            if (byte != 0x66 && byte != 0x67 && byte != 0xf0 && byte != 0xf2 && byte != 0xf3 && byte != 0x2e && byte != 0x36 && byte != 0x3e && byte != 0x26) return false;
+        }
+        return false;
+    }
+
     [[nodiscard]] bool _movable(const std::size_t index, const bool last) const {
-        return !_claimed.contains(index) && !_pending.contains(index) && (last || !_blocksFollowing(index));
+        return !_claimed.contains(index) && !_pending.contains(index) && !_segmentOverride(index) && (last || !_blocksFollowing(index));
     }
 
     [[nodiscard]] TrampolineSite _site(const std::uint64_t start, const std::size_t length, LoweredBody body) const {
