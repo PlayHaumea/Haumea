@@ -15,6 +15,9 @@
 #ifdef __linux__
 #include <netpacket/packet.h>
 #endif
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#endif
 #endif
 #include <cstdint>
 #include <cstddef>
@@ -161,6 +164,48 @@ struct HostDefaultRoute {
     unsigned long metric = 0;
 };
 
+#ifdef __APPLE__
+// Darwin has no /proc: the kernel's routing table, as netstat -rn reads it (sysctl PF_ROUTE NET_RT_FLAGS).
+static std::vector<HostDefaultRoute> HostDefaultRoutes() {
+    int mib[6] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_GATEWAY};
+    std::size_t size = 0;
+    if (sysctl(mib, 6, nullptr, &size, nullptr, 0) != 0) throw std::runtime_error("sceNetCtlGetInfo: the host routing table is unavailable");
+    std::vector<std::uint8_t> buffer(size);
+    if (sysctl(mib, 6, buffer.data(), &size, nullptr, 0) != 0) throw std::runtime_error("sceNetCtlGetInfo: the host routing table is unavailable");
+    std::vector<HostDefaultRoute> routes;
+    for (std::size_t offset = 0; offset + sizeof(rt_msghdr) <= size;) {
+        const auto* message = reinterpret_cast<const rt_msghdr*>(buffer.data() + offset);
+        if (message->rtm_msglen == 0) break;
+        offset += message->rtm_msglen;
+        if (!(message->rtm_flags & RTF_UP) || (message->rtm_flags & RTF_REJECT)) continue;
+        // the addresses follow the header in RTA_* order, each padded to a 4-byte multiple
+        const sockaddr* addresses[RTAX_MAX] = {};
+        const auto* cursor = reinterpret_cast<const std::uint8_t*>(message + 1);
+        for (int index = 0; index < RTAX_MAX; ++index) {
+            if (!(message->rtm_addrs & (1 << index))) continue;
+            const auto* address = reinterpret_cast<const sockaddr*>(cursor);
+            addresses[index] = address;
+            const std::size_t length = address->sa_len ? (address->sa_len + 3u) & ~3u : 4u;
+            cursor += length;
+        }
+        const auto* destination = addresses[RTAX_DST];
+        const auto* gateway = addresses[RTAX_GATEWAY];
+        const auto* mask = addresses[RTAX_NETMASK];
+        if (!destination || destination->sa_family != AF_INET || !gateway || gateway->sa_family != AF_INET) continue;
+        if (reinterpret_cast<const sockaddr_in*>(destination)->sin_addr.s_addr != 0) continue;
+        // a default route's netmask is all zeroes, and the kernel may shorten it to nothing
+        if (mask && mask->sa_len > offsetof(sockaddr_in, sin_addr) && reinterpret_cast<const sockaddr_in*>(mask)->sin_addr.s_addr != 0) continue;
+        char name[IF_NAMESIZE] = {};
+        if (!if_indextoname(message->rtm_index, name)) continue;
+        HostDefaultRoute route;
+        route.name = name;
+        route.gateway = reinterpret_cast<const sockaddr_in*>(gateway)->sin_addr;
+        route.metric = routes.size();   // the kernel lists the preferred default route first
+        routes.push_back(route);
+    }
+    return routes;
+}
+#else
 static std::vector<HostDefaultRoute> HostDefaultRoutes() {
     std::ifstream table("/proc/net/route");
     if (!table) throw std::runtime_error("sceNetCtlGetInfo: the host routing table is unavailable");
@@ -183,6 +228,7 @@ static std::vector<HostDefaultRoute> HostDefaultRoutes() {
     }
     return routes;
 }
+#endif
 
 static std::uint32_t HostInterfaceMtu(const char* name) {
     const int descriptor = socket(AF_INET, SOCK_DGRAM, 0);
