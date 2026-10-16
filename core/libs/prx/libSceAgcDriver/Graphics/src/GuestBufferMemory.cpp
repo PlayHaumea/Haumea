@@ -208,6 +208,10 @@ struct HostImports {
 #endif
     std::uint64_t useCounter = 0;
     std::uint64_t buildFloor = 0;
+    // Unified memory: large GPU allocations are imported only in windows that hold touched pages
+    // (see AcquireRegistered); these are the allocations handled that way and the windows taken.
+    std::map<std::uint64_t, std::uint64_t> partialRanges;
+    std::set<std::uint64_t> touchedWindows;
 };
 
 HostImports& Imports() {
@@ -966,6 +970,41 @@ std::atomic<std::uint64_t> budgetOverride{0};
 // Pinned imports count against the driver's system memory heap, which imports and type-3 mirrors share; past it
 // ordinary host allocations fail. The budget is APS5_HOST_IMPORT_MIB, else the larger of 6 GiB and half the physical
 // memory, at most the largest host heap less 2 GiB.
+// Every heap device-local (Apple GPUs): guest memory and device memory are the same pages.
+bool unifiedMemory(const Context& context) {
+    if (context.memory.memoryHeapCount == 0) return false;
+    for (std::uint32_t index = 0; index < context.memory.memoryHeapCount; ++index) {
+        if ((context.memory.memoryHeaps[index].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) == 0) return false;
+    }
+    return true;
+}
+
+// An imported buffer is resident as a whole on a GPU that cannot fault pages in, so a large guest
+// heap that is mostly untouched is imported in windows, and only those holding touched pages.
+constexpr std::uint64_t TouchedImportMinimum = std::uint64_t{1} << 30u;
+constexpr std::uint64_t TouchedImportWindow = std::uint64_t{64} << 20u;
+
+bool windowTouched(std::uint64_t begin, std::uint64_t end) {
+#ifdef _WIN32
+    static_cast<void>(begin);
+    static_cast<void>(end);
+    return true;
+#else
+    const auto page = static_cast<std::uint64_t>(getpagesize());
+#ifdef __APPLE__
+    using PageState = char;
+#else
+    using PageState = unsigned char;
+#endif
+    // In core, or (Darwin's 0x20) paged out: a touched page that was swapped still counts. Darwin
+    // also sets 0x80 on every page of an anonymous mapping, touched or not.
+    constexpr unsigned Touched = 0x1u | 0x20u;
+    std::vector<PageState> pages(static_cast<std::size_t>((end - begin + page - 1) / page));
+    if (mincore(reinterpret_cast<void*>(begin), static_cast<std::size_t>(end - begin), pages.data()) != 0) return true;
+    return std::any_of(pages.begin(), pages.end(), [](PageState state) { return (static_cast<unsigned>(static_cast<unsigned char>(state)) & Touched) != 0; });
+#endif
+}
+
 std::uint64_t importBudget(const Context& context) {
     if (const auto set = budgetOverride.load(std::memory_order_relaxed); set != 0) return set;
     static const std::uint64_t configured = []() -> std::uint64_t {
@@ -2562,6 +2601,21 @@ void SetImportWatch(const Context& context, ImportWatch watch) {
     state.unwatchDmaBufImports = state.unwatchImports;
 }
 
+bool NoteUnmappedGuestAccess(std::uint64_t address) {
+    auto& state = Imports();
+    std::lock_guard lock(state.mutex);
+    auto found = state.partialRanges.upper_bound(address);
+    if (found == state.partialRanges.begin()) return false;
+    --found;
+    if (address >= found->second) return false;
+    const auto window = found->first + (address - found->first) / TouchedImportWindow * TouchedImportWindow;
+    if (!state.touchedWindows.insert(window).second) return false;
+    // Rebuilds the cached address space, whose table lacks the window.
+    ++state.epoch;
+    std::fprintf(stderr, "[gpu] a shader reached untouched guest memory at 0x%llx; importing the window 0x%llx+0x%llx from the next build\n", static_cast<unsigned long long>(address), static_cast<unsigned long long>(window), static_cast<unsigned long long>(TouchedImportWindow));
+    return true;
+}
+
 void SetHostImportWindow(std::uint64_t bytes) {
     importWindow.store(bytes, std::memory_order_relaxed);
 }
@@ -2796,19 +2850,58 @@ void GuestBufferMemory::AcquireRegistered() {
             const HostImport* entry = nullptr;
             // Larger than the device allocates at once (4 GiB under MoltenVK, which has no sparse
             // binding): imported as windows that each get their own table range.
-            if (importable && context.maxAllocationBytes != 0 && range->bytes > context.maxAllocationBytes && !context.sparseBinding) {
-                const auto window = std::bit_floor(static_cast<std::uint64_t>(context.maxAllocationBytes));
+            const bool partial = importable && unifiedMemory(context) && range->bytes >= TouchedImportMinimum;
+            if (importable && (partial || (context.maxAllocationBytes != 0 && range->bytes > context.maxAllocationBytes && !context.sparseBinding))) {
+                const auto window = partial ? TouchedImportWindow : std::bit_floor(static_cast<std::uint64_t>(context.maxAllocationBytes));
                 std::vector<Region> windows;
+                bool complete = true;
                 {
                     auto& state = Imports();
                     std::lock_guard lock(state.mutex);
+                    if (partial) state.partialRanges[range->address] = range->address + range->bytes;
+#ifndef _WIN32
+                    // Debug aid: APS5_TRACE_TOUCHED=1 reports how the touched pages of a partially
+                    // imported allocation spread over windows of a few sizes.
+                    static const bool traceTouched = std::getenv("APS5_TRACE_TOUCHED") != nullptr;
+                    if (partial && traceTouched) {
+                        const auto page = static_cast<std::uint64_t>(getpagesize());
+                        std::vector<std::uint8_t> touched(static_cast<std::size_t>(range->bytes / page), 0);
+                        for (std::uint64_t at = 0; at < range->bytes; at += TouchedImportWindow) {
+                            const auto length = std::min<std::uint64_t>(TouchedImportWindow, range->bytes - at);
+                            touched[static_cast<std::size_t>(at / page)] = 0;
+                            for (std::uint64_t probe = at; probe < at + length; probe += page) touched[static_cast<std::size_t>(probe / page)] = windowTouched(range->address + probe, range->address + probe + page) ? 1 : 0;
+                        }
+                        std::uint64_t pages = 0;
+                        for (const auto value : touched) pages += value;
+                        std::fprintf(stderr, "[gpu] touched 0x%llx+0x%llx: %llu MiB in pages", static_cast<unsigned long long>(range->address), static_cast<unsigned long long>(range->bytes), static_cast<unsigned long long>(pages * page >> 20u));
+                        for (const std::uint64_t granule : {std::uint64_t{1} << 20u, std::uint64_t{8} << 20u, TouchedImportWindow}) {
+                            std::uint64_t windowsTouched = 0;
+                            for (std::uint64_t at = 0; at < range->bytes; at += granule) {
+                                const auto first = static_cast<std::size_t>(at / page);
+                                const auto last = static_cast<std::size_t>(std::min<std::uint64_t>(range->bytes, at + granule) / page);
+                                if (std::any_of(touched.begin() + first, touched.begin() + last, [](std::uint8_t value) { return value != 0; })) ++windowsTouched;
+                            }
+                            std::fprintf(stderr, ", %llu MiB in %llu KiB windows", static_cast<unsigned long long>(windowsTouched * granule >> 20u), static_cast<unsigned long long>(granule >> 10u));
+                        }
+                        std::fprintf(stderr, "\n");
+                    }
+#endif
                     for (auto begin = range->address; begin < range->address + range->bytes;) {
                         // Measured from the allocation like windowRun's cells, so neighbouring windows never merge.
                         const auto end = std::min(range->address + range->bytes, begin + window);
+                        if (partial && !state.touchedWindows.contains(begin)) {
+                            if (!windowTouched(begin, end)) {
+                                begin = end;
+                                continue;
+                            }
+                            state.touchedWindows.insert(begin);
+                        }
                         const auto* part = importAllocation(context, state, begin, lease, end, false);
                         if (part == nullptr) {
-                            windows.clear();
-                            break;
+                            complete = false;
+                            if (!partial) break;
+                            begin = end;
+                            continue;
                         }
                         Region piece{begin, end, range->writable, {}, nullptr};
                         piece.hostBacked = true;
@@ -2818,7 +2911,9 @@ void GuestBufferMemory::AcquireRegistered() {
                     }
                 }
                 lap(timing.importsUs, at);
-                if (!windows.empty()) {
+                // A partial heap is never copied whole: untouched windows stay out of the table, and a
+                // shader that reaches one reports it (NoteUnmappedGuestAccess) for the next build.
+                if (partial || complete) {
                     for (auto& piece : windows) regions.push_back(std::move(piece));
                     imported.push_back(range->address);
                     continue;

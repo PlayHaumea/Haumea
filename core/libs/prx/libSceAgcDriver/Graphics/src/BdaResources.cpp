@@ -1,4 +1,5 @@
 #include "prx/libSceAgcDriver/Graphics/include/BdaResources.hpp"
+#include "prx/libSceAgcDriver/Graphics/include/GuestBufferMemory.hpp"
 #include "ImageTableAbi.hpp"
 #include "prx/libSceAgcDriver/Execution/include/GuestMemory.hpp"
 #include <algorithm>
@@ -273,6 +274,10 @@ void BdaResources::CheckFault() const {
             message << ": poison entry " << report.bytes;
         }
         throw std::runtime_error(message.str());
+    }
+    if (report.reason == ShaderRecompiler::BdaAbi::FaultReason::Unmapped && NoteUnmappedGuestAccess(report.address)) {
+        std::memset(fault->Bytes().data(), 0, fault->Bytes().size());
+        return;
     }
     std::ostringstream message;
     if (report.reason == ShaderRecompiler::BdaAbi::FaultReason::UnlinkedCall) {
