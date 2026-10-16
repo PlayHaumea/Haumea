@@ -1118,6 +1118,27 @@ VulkanDevice::VulkanDevice(const PresentationWindow* window, bool compileOnly) :
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     check(enumerateDeviceExtensions(selected, nullptr, &extensionCount, availableExtensions.data()), "vkEnumerateDeviceExtensionProperties");
     const auto hasExtension = [&](const char* name) { return std::any_of(availableExtensions.begin(), availableExtensions.end(), [&](const auto& item) { return std::strcmp(item.extensionName, name) == 0; }); };
+    // MoltenVK backs every descriptor set with a Metal argument buffer, so its real per-stage limits
+    // are the update-after-bind ones; the plain limits it reports are Metal's direct-binding slots
+    // (16 samplers), which leave no room for the bindless image and sampler tables.
+    if (hasExtension(VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME) && hasExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT indexing{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT};
+        VkPhysicalDeviceDriverProperties driver{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES, &indexing};
+        VkPhysicalDeviceProperties2 driverProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &driver};
+        state->InstanceFunction<PFN_vkGetPhysicalDeviceProperties2>("vkGetPhysicalDeviceProperties2")(selected, &driverProperties);
+        if (driver.driverID == VK_DRIVER_ID_MOLTENVK) {
+            auto& limits = state->properties.limits;
+            const auto raise = [](std::uint32_t& limit, std::uint32_t argumentBufferLimit) { limit = std::max(limit, argumentBufferLimit); };
+            raise(limits.maxPerStageDescriptorSamplers, indexing.maxPerStageDescriptorUpdateAfterBindSamplers);
+            raise(limits.maxPerStageDescriptorSampledImages, indexing.maxPerStageDescriptorUpdateAfterBindSampledImages);
+            raise(limits.maxPerStageDescriptorStorageImages, indexing.maxPerStageDescriptorUpdateAfterBindStorageImages);
+            raise(limits.maxPerStageResources, indexing.maxPerStageUpdateAfterBindResources);
+            raise(limits.maxDescriptorSetSamplers, indexing.maxDescriptorSetUpdateAfterBindSamplers);
+            raise(limits.maxDescriptorSetSampledImages, indexing.maxDescriptorSetUpdateAfterBindSampledImages);
+            raise(limits.maxDescriptorSetStorageImages, indexing.maxDescriptorSetUpdateAfterBindStorageImages);
+            APS5_LOG_OUT("MoltenVK argument-buffer limits: %u samplers, %u sampled images per stage", limits.maxPerStageDescriptorSamplers, limits.maxPerStageDescriptorSampledImages);
+        }
+    }
     if (hasExtension(VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME)) {
         VkPhysicalDeviceDriverProperties driver{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES};
         VkPhysicalDeviceProperties2 driverProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &driver};
