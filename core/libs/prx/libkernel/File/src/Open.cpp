@@ -186,6 +186,13 @@ static int OpenNative(const std::filesystem::path& native, int flags, std::uint1
         std::error_code error;
         if (std::filesystem::is_symlink(native, error)) return SceErrorFromErrno(GuestEmlink);
     }
+#ifdef __APPLE__
+    // Darwin opens an existing directory for O_CREAT without O_EXCL; FreeBSD refuses with EISDIR.
+    if ((flags & (SCE_KERNEL_O_CREAT | SCE_KERNEL_O_EXCL)) == SCE_KERNEL_O_CREAT) {
+        std::error_code error;
+        if (std::filesystem::is_directory(native, error)) return SceErrorFromErrno(EISDIR);
+    }
+#endif
     int fd = NativeOpen(native, MapFlags(flags), mode);
 #ifdef _WIN32
     if (fd < 0 && (errno != ENOENT || !native.has_filename())) {

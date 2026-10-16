@@ -70,7 +70,9 @@ static int RenamePath_nid_no_patch(const std::filesystem::path& source, const st
     if (destinationExists) {
         error.clear();
         sameFile = fs::equivalent(source, destination, error);
-        if (error == std::errc::no_such_file_or_directory) error.clear();
+        // A path that does not resolve (a dangling link) is not the same file: libstdc++ reports
+        // it as no_such_file_or_directory, libc++ as not_supported.
+        if (error == std::errc::no_such_file_or_directory || error == std::errc::not_supported) error.clear();
         if (error) return FilesystemError(error);
         if (!sameFile && sourceIsDirectory && !destinationIsDirectory) return GuestEnotdir;
         if (!sameFile && !sourceIsDirectory && destinationIsDirectory) return GuestEisdir;
