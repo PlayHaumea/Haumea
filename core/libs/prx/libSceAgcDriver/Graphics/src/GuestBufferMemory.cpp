@@ -16,7 +16,19 @@
 #include <windows.h>
 #else
 #include <fcntl.h>
+#ifdef __linux__
 #include <linux/udmabuf.h>
+#else
+// No udmabuf outside Linux: shared direct memory is copied instead of imported.
+struct udmabuf_create {
+    std::uint32_t memfd;
+    std::uint32_t flags;
+    std::uint64_t offset;
+    std::uint64_t size;
+};
+#define UDMABUF_FLAGS_CLOEXEC 0x01
+#define UDMABUF_CREATE 0
+#endif
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -320,6 +332,9 @@ const char* createHostPointerImport(const Context& context, HostImport& entry, V
 
 #ifndef _WIN32
 int udmabufDevice() {
+#ifndef __linux__
+    return -1;
+#endif
     static const int device = [] {
         const int result = open("/dev/udmabuf", O_RDWR | O_CLOEXEC);
         if (result < 0) {
@@ -2493,6 +2508,10 @@ ImportProbe ProbeDmaBufImportWriteProtection(const Context& context) {
     const std::uint64_t alignment = std::max<std::uint64_t>(context.hostImportAlignment, page);
     const std::uint64_t bytes = (4 * page + alignment - 1) / alignment * alignment;
     probe.pages = static_cast<std::uint32_t>(bytes / page);
+#ifndef __linux__
+    probe.failure = "dma-buf import support";
+    return probe;
+#else
     const int file = memfd_create("aps5-dma-buf-import-probe", MFD_CLOEXEC | MFD_ALLOW_SEALING);
     if (file < 0) {
         probe.failure = "memfd_create";
@@ -2521,6 +2540,7 @@ ImportProbe ProbeDmaBufImportWriteProtection(const Context& context) {
     munmap(mapped, bytes);
     close(file);
     return probe;
+#endif
 #endif
 }
 

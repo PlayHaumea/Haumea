@@ -1,3 +1,4 @@
+#include "prx/libc/include/AnonymousMemoryFile.hpp"
 #include "prx/libc/include/General.hpp"
 #include "prx/libc/include/GuestArena.hpp"
 #include "prx/libkernel/DirectMemory/DirectMemory.hpp"
@@ -140,7 +141,7 @@ int DuplicateDescriptor(int descriptor) {
 }
 #else
 int CreateBacking(std::size_t bytes, int* descriptor, std::shared_ptr<JitObject>* object) {
-    const int file = memfd_create("anyps5 jit shared memory", MFD_CLOEXEC);
+    const int file = AnonymousMemoryFile::Create("anyps5 jit shared memory");
     if (file < 0) return HostFailure("create JIT shared memory", errno);
     const bool representable = bytes <= static_cast<std::uint64_t>(std::numeric_limits<off_t>::max());
     if (!representable || ftruncate(file, static_cast<off_t>(bytes)) != 0) {

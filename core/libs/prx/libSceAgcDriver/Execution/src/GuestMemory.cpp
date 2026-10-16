@@ -644,6 +644,11 @@ bool onOwnLiveStack(std::uintptr_t address, std::size_t bytes) {
             low = static_cast<std::uintptr_t>(lowLimit);
             high = static_cast<std::uintptr_t>(highLimit);
 #else
+#ifdef __APPLE__
+            // Darwin reports the stack top; the stack grows down from it.
+            high = reinterpret_cast<std::uintptr_t>(pthread_get_stackaddr_np(pthread_self()));
+            low = high - pthread_get_stacksize_np(pthread_self());
+#else
             pthread_attr_t attributes;
             if (pthread_getattr_np(pthread_self(), &attributes) != 0) return;
             void* base = nullptr;
@@ -653,6 +658,7 @@ bool onOwnLiveStack(std::uintptr_t address, std::size_t bytes) {
                 high = low + size;
             }
             pthread_attr_destroy(&attributes);
+#endif
 #endif
         }
     };

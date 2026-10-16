@@ -100,7 +100,12 @@ int OpenMetadata(const std::filesystem::path& path, bool directory) {
     }
     return descriptor;
 #else
+#if defined(__APPLE__)
+    // macOS has no O_PATH; O_EVTONLY opens without read access too.
+    const int descriptor = ::open(path.c_str(), O_EVTONLY | O_CLOEXEC | (directory ? O_DIRECTORY : 0));
+#else
     const int descriptor = ::open(path.c_str(), O_PATH | O_CLOEXEC | (directory ? O_DIRECTORY : 0));
+#endif
     return descriptor < 0 ? Fail(HostError(errno)) : descriptor;
 #endif
 }

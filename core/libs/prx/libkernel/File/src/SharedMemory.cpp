@@ -1,3 +1,4 @@
+#include "prx/libc/include/AnonymousMemoryFile.hpp"
 #include "prx/libc/include/General.hpp"
 #include "prx/libkernel/File/include/FileFlags.hpp"
 #include "prx/libkernel/File/include/SharedMemory.hpp"
@@ -209,7 +210,7 @@ int CreateAnonymousFile() {
     errno = EEXIST;
     return -1;
 #else
-    const int descriptor = memfd_create("anyps5 shm_open", MFD_CLOEXEC);
+    const int descriptor = AnonymousMemoryFile::Create("anyps5 shm_open");
     return descriptor;
 #endif
 }

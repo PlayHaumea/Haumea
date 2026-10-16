@@ -129,6 +129,9 @@ struct PthreadPrivate {
     int cpuClockThread = 0;
 #ifndef _WIN32
     clockid_t hostCpuClock{};
+#if defined(__APPLE__)
+    unsigned int hostMachThread = 0;  // mach_port_t: macOS has no per-thread CPU clock id
+#endif
     bool hostCpuClockBound = false;
     void* guestStack = nullptr;
     std::size_t guestStackBytes = 0;

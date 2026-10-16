@@ -4,9 +4,19 @@
 #include <mach-o/dyld.h>
 #include <mach-o/getsect.h>
 #include <mach-o/loader.h>
+#include <atomic>
 #include <cstring>
 
 namespace {
+
+std::atomic<unsigned long long> imagesAdded{0};
+std::atomic<unsigned long long> imagesRemoved{0};
+
+const bool countingImages = [] {
+    _dyld_register_func_for_add_image([](const mach_header*, intptr_t) { imagesAdded.fetch_add(1); });
+    _dyld_register_func_for_remove_image([](const mach_header*, intptr_t) { imagesRemoved.fetch_add(1); });
+    return true;
+}();
 
 constexpr std::uint64_t MetaVersion = 2;
 constexpr std::size_t LoadBiasOffset = 0x08;
@@ -34,6 +44,11 @@ extern "C" int dl_iterate_phdr(int (*callback)(dl_phdr_info*, std::size_t, void*
         info.dlpi_name = header->filetype == MH_EXECUTE ? "" : _dyld_get_image_name(index);
         info.dlpi_phdr = reinterpret_cast<const Elf64_Phdr*>(meta + HeadersOffset);
         info.dlpi_phnum = static_cast<std::uint16_t>(count);
+        info.dlpi_adds = imagesAdded.load();
+        info.dlpi_subs = imagesRemoved.load();
+        // A TLS module id per image with PT_TLS: its dyld index, which is stable while it stays loaded.
+        for (std::uint64_t h = 0; h < count; ++h)
+            if (info.dlpi_phdr[h].p_type == 7 /* PT_TLS */ && info.dlpi_phdr[h].p_memsz != 0) info.dlpi_tls_modid = index + 1;
         if (const int result = callback(&info, sizeof(info), data); result != 0) return result;
     }
     return 0;

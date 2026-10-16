@@ -14,6 +14,10 @@
 #include <windows.h>
 #else
 #include <dlfcn.h>
+#ifdef __APPLE__
+#include <pthread.h>
+#include <pthread/qos.h>
+#endif
 #include <sched.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
@@ -42,7 +46,18 @@ void LogOnce(const char* role, const std::string& text) {
     std::fprintf(stderr, "[thread-priority] %s: %s\n", role, text.c_str());
 }
 
-#ifndef _WIN32
+#if defined(__APPLE__)
+
+// Darwin has no rtkit or SCHED_RESET_ON_FORK; the scheduler takes QoS classes instead.
+void Raise(const char* role) {
+    const bool realtime = RequestedMode() == ThreadPriorityMode::Realtime;
+    if (const int error = pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0); error != 0) {
+        throw std::runtime_error(std::string("APS5_THREAD_PRIORITY: ") + role + " pthread_set_qos_class_self_np failed (error " + std::to_string(error) + ")");
+    }
+    LogOnce(role, realtime ? "user-interactive QoS (no realtime class on Darwin)" : "user-interactive QoS");
+}
+
+#elif !defined(_WIN32)
 
 struct DBusConnection;
 struct DBusMessage;

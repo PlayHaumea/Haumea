@@ -21,7 +21,12 @@
 #include <windows.h>
 #else
 #include <dlfcn.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include "prx/libc/include/specifics/linux/ElfTypes.hpp"
+#else
 #include <link.h>
+#endif
 #endif
 
 #ifdef _WIN32
@@ -61,7 +66,20 @@ void* Symbol(Module& module, const char* name) {
     return ::dlsym(module.native, name);
 #endif
 }
-#ifndef _WIN32
+#if defined(__APPLE__)
+bool FromGuestModule(void* address) {
+    Dl_info info{};
+    if (address == nullptr || !::dladdr(address, &info) || info.dli_fname == nullptr) return false;
+    if (info.dli_fbase == _dyld_get_image_header(0)) return true;  // dyld image 0 is the main program
+    const std::string path(info.dli_fname);
+    return path.ends_with(".prx");
+}
+
+void* DefaultScopeSymbol(const char* symbolName) {
+    auto* result = ::dlsym(RTLD_DEFAULT, symbolName);
+    return FromGuestModule(result) ? result : nullptr;
+}
+#elif !defined(_WIN32)
 const link_map* MainProgramMap() {
     static const link_map* const map = [] {
         void* handle = ::dlopen(nullptr, RTLD_LAZY);

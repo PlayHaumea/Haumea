@@ -16,7 +16,12 @@
 #include <windows.h>
 #else
 #include <dlfcn.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include "prx/libc/include/specifics/linux/ElfTypes.hpp"
+#else
 #include <link.h>
+#endif
 #endif
 
 #ifdef _WIN32
@@ -39,6 +44,16 @@ const void* imageContaining(const void* address, bool reference, void*& handle, 
         throw std::runtime_error(std::string(caller) + ": address outside every loaded image");
     if (reference) handle = module;
     return module;
+#elif defined(__APPLE__)
+    // No link_map: the image's Mach-O header (dli_fbase) identifies it; the main program cannot be dlopen'd by path.
+    Dl_info info{};
+    if (!::dladdr(address, &info) || info.dli_fbase == nullptr)
+        throw std::runtime_error(std::string(caller) + ": address outside every loaded image");
+    if (reference && info.dli_fbase != _dyld_get_image_header(0) && info.dli_fname && *info.dli_fname) {
+        handle = dlopen(info.dli_fname, RTLD_LAZY | RTLD_NOLOAD);
+        if (!handle) throw std::runtime_error(std::string(caller) + ": cannot reference " + info.dli_fname);
+    }
+    return info.dli_fbase;
 #else
     Dl_info info{};
     link_map* image = nullptr;

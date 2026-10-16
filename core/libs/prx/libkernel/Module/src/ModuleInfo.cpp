@@ -22,7 +22,12 @@
 #include <filesystem>
 #else
 #include <dlfcn.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include "prx/libc/include/specifics/linux/ElfTypes.hpp"
+#else
 #include <link.h>
+#endif
 #include <mutex>
 #include <unistd.h>
 #include <unordered_map>
@@ -180,10 +185,16 @@ std::vector<GuestImage> GuestImages() {
     std::vector<GuestImage> images;
     for (const auto address : addresses) {
         Dl_info symbol{};
+#if defined(__APPLE__)
+        if (!::dladdr(reinterpret_cast<const void*>(address), &symbol) || !symbol.dli_fbase)
+            throw std::runtime_error("sceKernelGetModuleList: no image for a loaded segment");
+        images.push_back({symbol.dli_fbase, address});
+#else
         link_map* native = nullptr;
         if (!dladdr1(reinterpret_cast<const void*>(address), &symbol, reinterpret_cast<void**>(&native), RTLD_DL_LINKMAP) || !native)
             throw std::runtime_error("sceKernelGetModuleList: no link map for a loaded image");
         images.push_back({native, address});
+#endif
     }
     return images;
 }
@@ -207,7 +218,12 @@ std::uint64_t GuestSegmentBytes() {
 }
 
 bool SystemImage(const GuestImage& image) {
+#if defined(__APPLE__)
+    Dl_info symbol{};
+    const char* name = image.native != _dyld_get_image_header(0) && ::dladdr(image.native, &symbol) ? symbol.dli_fname : nullptr;
+#else
     const auto* name = static_cast<const link_map*>(image.native)->l_name;
+#endif
     const std::string_view path = name ? name : "";
     return !path.empty() && !path.ends_with(GuestModuleSuffix);
 }
@@ -400,9 +416,14 @@ int APS5_VABI sceKernelGetModuleInfoFromAddr(std::uint64_t address, int flags, M
     if (!Fill(static_cast<std::uintptr_t>(address), result)) return SCE_KERNEL_ERROR_ESRCH;
 #else
     Dl_info symbol{};
+#if defined(__APPLE__)
+    if (!::dladdr(reinterpret_cast<const void*>(address), &symbol) || !symbol.dli_fbase) return SCE_KERNEL_ERROR_ESRCH;
+    const void* native = symbol.dli_fbase;
+#else
     link_map* native = nullptr;
     if (!dladdr1(reinterpret_cast<const void*>(address), &symbol, reinterpret_cast<void**>(&native), RTLD_DL_LINKMAP) || !native)
         return SCE_KERNEL_ERROR_ESRCH;
+#endif
     ImageSearch<ModuleInfoEx> search{static_cast<std::uintptr_t>(address), &result, false};
     dl_iterate_phdr(FindImage<ModuleInfoEx>, &search);
     if (!search.found) return SCE_KERNEL_ERROR_ESRCH;

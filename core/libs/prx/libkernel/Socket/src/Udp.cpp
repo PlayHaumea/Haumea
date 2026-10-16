@@ -1,3 +1,4 @@
+#include <climits>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
@@ -6,6 +7,10 @@
 #include <io.h>
 #else
 #include <sys/socket.h>
+#include <poll.h>
+#if defined(__APPLE__) && !defined(POLLRDHUP)
+#define POLLRDHUP 0  // macOS reports a peer shutdown as POLLHUP
+#endif
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -365,9 +370,17 @@ bool GuestSockets::WaitAny(const std::vector<Interest>& interests, std::uint64_t
     if (WSAPoll(entries.data(), static_cast<ULONG>(entries.size()), timeout) == SOCKET_ERROR)
         throw std::runtime_error("equeue wait: WSAPoll failed, guest errno " + std::to_string(NativeError()));
 #else
+#if defined(__APPLE__)
+    // No ppoll: round the deadline up to whole milliseconds for poll.
+    const int timeoutMs = deadlineNanos != 0
+        ? static_cast<int>(std::min<std::uint64_t>((remaining + 999999) / 1000000, INT_MAX)) : -1;
+    if (::poll(entries.data(), static_cast<nfds_t>(entries.size()), timeoutMs) < 0 && errno != EINTR)
+        throw std::runtime_error("equeue wait: poll failed, guest errno " + std::to_string(NativeError()));
+#else
     timespec timeout{static_cast<time_t>(remaining / 1000000000), static_cast<long>(remaining % 1000000000)};
     if (::ppoll(entries.data(), entries.size(), deadlineNanos != 0 ? &timeout : nullptr, nullptr) < 0 && errno != EINTR)
         throw std::runtime_error("equeue wait: ppoll failed, guest errno " + std::to_string(NativeError()));
+#endif
 #endif
     char drained[16];
     while (recv(waker, drained, sizeof(drained), 0) > 0) {}
