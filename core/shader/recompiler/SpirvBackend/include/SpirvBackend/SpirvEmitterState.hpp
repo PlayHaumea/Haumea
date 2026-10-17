@@ -149,8 +149,8 @@ struct SpirvEmitterState {
     // Execution scope of the barriers that keep one guest wave's LDS accesses in program order across
     // host invocations (see WaveLdsScope); 0 when none are emitted.
     std::uint32_t waveLdsScope = 0;
-    // Debug aid (APS5_LOOP_GUARD=<exits>): after that many evaluated loop exits an invocation leaves its
-    // loops, and the first loop that ran out is reported as a LoopLimit fault instead of hanging the GPU.
+    // After this many evaluated loop exits an invocation leaves its loops; 2^24 by default (Metal needs every loop bounded),
+    // APS5_LOOP_GUARD=<exits> sets it, and with a fault buffer the first loop that ran out is reported as a LoopLimit fault.
     std::uint32_t loopGuardLimit = 0;
     std::uint32_t loopGuardVisits = 0;
     std::uint32_t loopGuardPc = 0;

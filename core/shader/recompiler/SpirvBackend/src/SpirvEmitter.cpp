@@ -287,6 +287,10 @@ std::vector<std::uint32_t> SpirvEmitter::Emit(const IrProgram& program, const Sh
         state.tableIndexNonUniform = threads > program.WaveSize() || !oneSubgroup;
     }
     state.waveLdsScope = WaveLdsScope(program, workgroup, state.laneCount);
+    // Every loop is bounded (2^24 exits per invocation, far past any real shader) unless APS5_LOOP_GUARD sets a limit to report.
+    // Without a bound Metal's compiler may assume a loop terminates and miscompile it: Stray's exposure pass (pixel shader
+    // 0x8011160000) hung the GPU every run unbounded and never came near the bound with it (2026-10-17).
+    state.loopGuardLimit = 1u << 24;
     if (const char* guard = std::getenv("APS5_LOOP_GUARD")) state.loopGuardLimit = static_cast<std::uint32_t>(std::strtoul(guard, nullptr, 0));
     // Stopped invocations would leave the wave LDS barriers incomplete.
     state.bdaStopsInvocations = state.waveLdsScope == 0 && !state.spannedWave && BdaInvocationsMayStop(program) && program.Resources().stage != IrShaderStage::Mesh;
