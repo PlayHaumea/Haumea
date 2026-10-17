@@ -1,5 +1,7 @@
 #include <unordered_set>
 #include <mutex>
+#include <atomic>
+#include <cstring>
 #include "prx/libSceAgcDriver/Execution/include/Driver/Driver.hpp"
 #include "prx/libSceAgcDriver/Execution/include/Driver/Diagnostics.hpp"
 #include "prx/libSceAgcDriver/Execution/include/Driver/Draw/DrawPipeline.hpp"
@@ -181,6 +183,48 @@ DrawVerdict Driver::draw(QueueState& queue, std::span<const std::uint32_t> packe
     std::vector<DrawProgram> programs = decode->programs;
     for (const auto& patch : userPatches) programs[patch.program].userData[patch.index] = patch.value;
     if (const auto skipped = SkippedShader(); skipped != 0 && std::any_of(programs.begin(), programs.end(), [skipped](const DrawProgram& program) { return program.binary.codeAddress == skipped; })) return drawn();
+    // Debug aid: APS5_PEEK_PROGRAM=<hex> APS5_PEEK_ADDRESS=<hex>[:<bytes>] prints guest memory as the draws using that program are
+    // decoded (what a shader will read from a buffer the CPU or an earlier submission wrote).
+    {
+        static const std::uint64_t peekProgram = [] { const char* t = std::getenv("APS5_PEEK_PROGRAM"); return t ? std::strtoull(t, nullptr, 16) : 0ull; }();
+        if (peekProgram != 0 && std::any_of(programs.begin(), programs.end(), [](const DrawProgram& p) { return p.binary.codeAddress == peekProgram; })) {
+            // APS5_PEEK_ADDRESS: <hex>[:<hex bytes>][,...]; words, and as floats when APS5_PEEK_FLOATS is set
+            static const auto peeks = [] {
+                std::vector<std::pair<std::uint64_t, std::uint64_t>> list;
+                const char* t = std::getenv("APS5_PEEK_ADDRESS");
+                while (t && *t) {
+                    char* end = nullptr;
+                    const std::uint64_t address = std::strtoull(t, &end, 16);
+                    std::uint64_t bytes = 16;
+                    if (end && *end == ':') bytes = std::strtoull(end + 1, &end, 16);
+                    if (address) list.push_back({address, std::min<std::uint64_t>(bytes, 1024)});
+                    if (!end || *end != ',') break;
+                    t = end + 1;
+                }
+                return list;
+            }();
+            static const bool floats = std::getenv("APS5_PEEK_FLOATS") != nullptr;
+            static std::atomic<int> shown{0};
+            if (shown.fetch_add(1) < 12) {
+                std::fprintf(stderr, "[peek] program 0x%llx: target 0x%llx %ux%u (%zu targets), render %ux%u, viewport %.0f,%.0f %.0fx%.0f, scissor %d,%d %ux%u\n", static_cast<unsigned long long>(peekProgram),
+                             static_cast<unsigned long long>(graphics.color.address), graphics.color.extent.width, graphics.color.extent.height, graphics.colors.size(), graphics.renderExtent.width, graphics.renderExtent.height,
+                             graphics.viewport.x, graphics.viewport.y, graphics.viewport.width, graphics.viewport.height, graphics.scissor.offset.x, graphics.scissor.offset.y, graphics.scissor.extent.width, graphics.scissor.extent.height);
+                for (const auto& [address, bytes] : peeks) {
+                    if (!GuestMemory::Accessible(reinterpret_cast<const void*>(address), static_cast<std::size_t>(bytes))) { std::fprintf(stderr, "[peek]   0x%llx: not accessible\n", static_cast<unsigned long long>(address)); continue; }
+                    std::string text;
+                    char word[24];
+                    for (std::uint64_t i = 0; i + 4 <= bytes; i += 4) {
+                        std::uint32_t value;
+                        std::memcpy(&value, reinterpret_cast<const void*>(address + i), 4);
+                        if (floats) { float f; std::memcpy(&f, &value, 4); std::snprintf(word, sizeof(word), " %g", f); }
+                        else std::snprintf(word, sizeof(word), " %08x", value);
+                        text += word;
+                    }
+                    std::fprintf(stderr, "[peek]   0x%llx:%s\n", static_cast<unsigned long long>(address), text.c_str());
+                }
+            }
+        }
+    }
     if (graphics.stages.path == Graphics::ShaderPath::Geometry && localDevice != nullptr && !localDevice->MeshShader()) {
         // The geometry path (PS5 primitive shaders) is translated to mesh shaders, which MoltenVK lacks. The draw is left out,
         // as a skipped shader's is, rather than ending the game; each front program is named once.
