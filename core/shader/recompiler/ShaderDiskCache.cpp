@@ -215,6 +215,10 @@ std::shared_ptr<const MappedFile> MapFile(const std::filesystem::path& path) {
         throw;
     }
 #else
+    // ANYPS5_SHADER_CACHE_COPY: read entries instead of mapping them, for a cache on a disk that can disappear. Loaded SPIR-V
+    // points into the mapping, so once the disk is gone any later touch of it is a SIGBUS; a failed read is only a miss.
+    static const bool copy = std::getenv("ANYPS5_SHADER_CACHE_COPY") != nullptr;
+    if (copy) return nullptr;
     const int descriptor = open(path.c_str(), O_RDONLY | O_CLOEXEC);
     if (descriptor < 0) return nullptr;
     struct stat status{};
