@@ -540,15 +540,22 @@ private:
             ::mprotect(reinterpret_cast<void*>(page), _page, state & ProtectionMask);
             return true;
         }
-        if ((state & PROT_WRITE) == 0) return false;
+        if ((state & PROT_WRITE) == 0) {
+            // A store into a page the guest mapped without write access: not the watch's to fix. Say so before the default handler
+            // ends the process, with what the kernel has there (a guest that writes it on a PS5 had it writable there).
+            describe(address, page, state, "recorded read-only");
+            return false;
+        }
         // A fault on a page recorded writable that the watch did not protect: the page's real protection no longer matches the
         // record. Returning "handled" without changing anything retries the store into the same fault forever, which hung Stray's
         // first GPU submission. Say what the kernel has, put the recorded protection back once, and let a third fault crash.
-        thread_local std::uintptr_t lastPage = 0;
+        // The same store faulting again is the loop to break; stores further on in the page are progress (under Rosetta the page
+        // can be protected again between them although the kernel reports it writable, as Stray's driver thread showed).
+        thread_local std::uintptr_t lastAddress = 0;
         thread_local unsigned repeats = 0;
-        repeats = page == lastPage ? repeats + 1 : 0;
-        lastPage = page;
-        if (repeats >= 2) return false;
+        repeats = address == lastAddress ? repeats + 1 : 0;
+        lastAddress = address;
+        if (repeats >= 2) { describe(address, page, state, "still faults after restoring"); return false; }
         if (repeats == 1) {
             mach_vm_address_t region = page;
             mach_vm_size_t size = 0;
@@ -563,6 +570,19 @@ private:
         }
         ::mprotect(reinterpret_cast<void*>(page), _page, state & ProtectionMask);
         return true;
+    }
+
+    static void describe(std::uintptr_t address, std::uintptr_t page, std::uint8_t state, const char* what) {
+        mach_vm_address_t region = page;
+        mach_vm_size_t size = 0;
+        vm_region_basic_info_data_64_t info{};
+        mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+        mach_port_t object = MACH_PORT_NULL;
+        const bool found = mach_vm_region(mach_task_self(), &region, &size, VM_REGION_BASIC_INFO_64, reinterpret_cast<vm_region_info_t>(&info), &count, &object) == KERN_SUCCESS;
+        char line[256];
+        const int n = std::snprintf(line, sizeof(line), "[memory] write watch: fault at 0x%llx left to the default handler: page %s (state 0x%02x); kernel has %s region 0x%llx+0x%llx prot %d/%d\n",
+                                    static_cast<unsigned long long>(address), what, state, found ? "the" : "no", static_cast<unsigned long long>(region), static_cast<unsigned long long>(size), found ? info.protection : -1, found ? info.max_protection : -1);
+        if (n > 0) ::write(2, line, static_cast<std::size_t>(std::min(n, static_cast<int>(sizeof(line) - 1))));
     }
 
     std::uintptr_t pageStart(std::uintptr_t address) const {
