@@ -501,7 +501,20 @@ private:
 
     static void fault(int signal, siginfo_t* info, void* context) {
         auto& watch = Get();
-        if (watch.record(reinterpret_cast<std::uintptr_t>(info->si_addr))) return;
+        const bool handled = watch.record(reinterpret_cast<std::uintptr_t>(info->si_addr));
+        // APS5_TRACE_WRITE_WATCH: the first faults the handler sees and a count after that (async-signal-safe output only)
+        static const bool trace = std::getenv("APS5_TRACE_WRITE_WATCH") != nullptr;
+        if (trace) {
+            static std::atomic<std::uint64_t> faults{0};
+            const auto n = faults.fetch_add(1, std::memory_order_relaxed);
+            if (n < 16 || n % 100000 == 0) {
+                char line[160];
+                const int length = std::snprintf(line, sizeof(line), "[memory] write watch fault #%llu: signal %d at 0x%llx, %s\n", static_cast<unsigned long long>(n), signal,
+                                                  static_cast<unsigned long long>(reinterpret_cast<std::uintptr_t>(info->si_addr)), handled ? "handled" : "not ours");
+                if (length > 0) ::write(2, line, static_cast<std::size_t>(std::min(length, static_cast<int>(sizeof(line) - 1))));
+            }
+        }
+        if (handled) return;
         const auto& previous = signal == SIGBUS ? watch._previousBus : watch._previousSegv;
         if ((previous.sa_flags & SA_SIGINFO) != 0 && previous.sa_sigaction != nullptr) {
             previous.sa_sigaction(signal, info, context);
@@ -527,7 +540,29 @@ private:
             ::mprotect(reinterpret_cast<void*>(page), _page, state & ProtectionMask);
             return true;
         }
-        return (state & PROT_WRITE) != 0;
+        if ((state & PROT_WRITE) == 0) return false;
+        // A fault on a page recorded writable that the watch did not protect: the page's real protection no longer matches the
+        // record. Returning "handled" without changing anything retries the store into the same fault forever, which hung Stray's
+        // first GPU submission. Say what the kernel has, put the recorded protection back once, and let a third fault crash.
+        thread_local std::uintptr_t lastPage = 0;
+        thread_local unsigned repeats = 0;
+        repeats = page == lastPage ? repeats + 1 : 0;
+        lastPage = page;
+        if (repeats >= 2) return false;
+        if (repeats == 1) {
+            mach_vm_address_t region = page;
+            mach_vm_size_t size = 0;
+            vm_region_basic_info_data_64_t info{};
+            mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+            mach_port_t object = MACH_PORT_NULL;
+            const bool found = mach_vm_region(mach_task_self(), &region, &size, VM_REGION_BASIC_INFO_64, reinterpret_cast<vm_region_info_t>(&info), &count, &object) == KERN_SUCCESS;
+            char line[256];
+            const int n = std::snprintf(line, sizeof(line), "[memory] write watch: repeated fault at 0x%llx on a page recorded writable (state 0x%02x); kernel has %s region 0x%llx+0x%llx prot %d/%d; restoring\n",
+                                        static_cast<unsigned long long>(address), state, found ? "the" : "no", static_cast<unsigned long long>(region), static_cast<unsigned long long>(size), found ? info.protection : -1, found ? info.max_protection : -1);
+            if (n > 0) ::write(2, line, static_cast<std::size_t>(std::min(n, static_cast<int>(sizeof(line) - 1))));
+        }
+        ::mprotect(reinterpret_cast<void*>(page), _page, state & ProtectionMask);
+        return true;
     }
 
     std::uintptr_t pageStart(std::uintptr_t address) const {

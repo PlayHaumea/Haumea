@@ -14,6 +14,7 @@
 #include <deque>
 #include <mutex>
 #include <random>
+#include <signal.h>
 
 namespace {
 
@@ -157,9 +158,25 @@ extern "C" void Aps5MainThreadPost_nid_no_patch(void (*function)(void*), void* c
 }
 
 // Called by the entry stub with the guest entry point and a SysV initial stack (argc, argv, envp).
+// The runtime's write watch makes guest pages writable again from its SIGSEGV/SIGBUS handler. A thread with those blocked cannot
+// take that fault: native macOS kills the process, and under Rosetta the store retries forever (Stray's first GPU submission hung
+// that way, on a main thread that had every signal blocked). Every thread the guest runs on inherits this thread's mask.
+extern "C" void Aps5UnblockFaultSignals_nid_no_patch() {
+    sigset_t faults;
+    sigemptyset(&faults);
+    for (const int signal : {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGTRAP}) sigaddset(&faults, signal);
+    pthread_sigmask(SIG_UNBLOCK, &faults, nullptr);
+}
+
 [[noreturn]] void Aps5StartGuest_nid_no_patch(void* entry, void* stack) {
     static GuestStart start;
     start = {entry, stack};
+    {
+        sigset_t mask;
+        pthread_sigmask(SIG_SETMASK, nullptr, &mask);
+        if (sigismember(&mask, SIGSEGV) || sigismember(&mask, SIGBUS)) std::fprintf(stderr, "[aps5] the main thread started with fault signals blocked (mask 0x%x); unblocking them\n", static_cast<unsigned>(mask));
+        Aps5UnblockFaultSignals_nid_no_patch();
+    }
     {
         auto& queue = MainQueue();
         std::lock_guard lock(queue.mutex);

@@ -167,6 +167,12 @@ bool Install(int guest, const GuestSigaction& action) {
     const int native = NativeSignal(guest);
     if (!native) return true;
     const auto previous = handlers[guest].exchange(Delivered(action) ? reinterpret_cast<GuestHandler>(action.handler) : nullptr);
+#ifdef __APPLE__
+    // On macOS the runtime's write watch owns the fault signals: it write-protects guest pages and makes them writable again from
+    // its SIGSEGV/SIGBUS handler. A guest's crash handler (Unreal installs one) replacing it left every protected page read-only,
+    // and the driver's next store into one retried the same fault forever. The guest's disposition is still recorded.
+    if (native == SIGSEGV || native == SIGBUS) return true;
+#endif
     auto hostHandler = action.handler == 1 ? SIG_IGN : Delivered(action) ? Dispatch : SIG_DFL;
     if (std::signal(native, hostHandler) == SIG_ERR) {
         handlers[guest].store(previous);

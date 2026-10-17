@@ -544,6 +544,10 @@ void ThreadCancel::EndWait() {
     BeginWait(nullptr);
 }
 
+#ifdef __APPLE__
+extern "C" void Aps5UnblockFaultSignals_nid_no_patch();
+#endif
+
 static void RunThread(std::unique_ptr<ThreadArgs> args) {
     APS5_LOG_OUT("RunThread entry=0x%llx arg=%p self=%p", static_cast<unsigned long long>(reinterpret_cast<std::uintptr_t>(args->entry)), args->arg, static_cast<void*>(args->self));
     const auto entry = args->entry;
@@ -559,6 +563,9 @@ static void RunThread(std::unique_ptr<ThreadArgs> args) {
     args.reset();
 #ifndef _WIN32
     pthread_sigmask(SIG_SETMASK, &signalMask, nullptr);
+#endif
+#ifdef __APPLE__
+    Aps5UnblockFaultSignals_nid_no_patch();   // DarwinGuestStart.cpp: the write watch's faults must reach it
 #endif
     finishThread(self, entry(arg));
     CurrentGuestState().current = nullptr;
@@ -771,6 +778,8 @@ int APS5_VABI scePthreadCreate(Pthread* thread, const PthreadAttr* attr, Pthread
     if (created == 0) {
         sigset_t allSignals;
         sigfillset(&allSignals);
+        // never the synchronous fault signals: the new thread runs with this mask until RunThread restores the creator's
+        for (const int signal : {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGTRAP}) sigdelset(&allSignals, signal);
         pthread_sigmask(SIG_BLOCK, &allSignals, nullptr);
         created = pthread_create(&p->hostThread, &nativeAttr, StartNativeThread, native.get());
         pthread_sigmask(SIG_SETMASK, &creatorMask, nullptr);
