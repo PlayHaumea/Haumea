@@ -3555,6 +3555,10 @@ std::optional<ShaderRecompiler::GeometryStageLimits> VulkanDevice::GeometryLimit
     return ShaderRecompiler::GeometryStageLimits{limits.maxGeometryInputComponents, limits.maxGeometryOutputComponents, limits.maxGeometryOutputVertices, limits.maxGeometryTotalOutputComponents, limits.maxFragmentInputComponents};
 }
 
+bool VulkanDevice::MeshShader() const {
+    return state->meshShader;
+}
+
 bool VulkanDevice::PrimitiveListRestart() const {
     return state->primitiveListRestart;
 }
@@ -4926,7 +4930,7 @@ VulkanDevice::IndirectOutcome VulkanDevice::dispatch(const ShaderRecompiler::Rec
         // finishes the recorder up to that batch's serial. Prints the [address-sync] leases line.
         Graphics::CountLeaseOutcome(false, recorder.Submissions() + 1);
     }
-    if (TraceDispatchIo()) std::fprintf(stderr, "[dispatch-io] %s:%s\n", groupsText, resources->Describe().c_str());
+    if (TraceDispatchIo()) std::fprintf(stderr, "[dispatch-io] program 0x%llx groups %s:%s\n", static_cast<unsigned long long>(programAddress), groupsText, resources->Describe().c_str());
     WatchMemory(programAddress);
     // The recipe for the caller's dispatch-cache variant (design_cpu_final M4, rule R3): only an
     // object the resource cache serves under this content key (reusable: no lease, no copied
@@ -5062,7 +5066,7 @@ RecipeOutcome VulkanDevice::DispatchRecipe(const ShaderRecompiler::RecompileResu
         state->recorder->Sync();
         timer.phase(PhaseSync);
     }
-    if (TraceDispatchIo()) std::fprintf(stderr, "[dispatch-io] %s:%s\n", groupsText, hit->resources->Describe().c_str());
+    if (TraceDispatchIo()) std::fprintf(stderr, "[dispatch-io] program 0x%llx groups %s:%s\n", static_cast<unsigned long long>(programAddress), groupsText, hit->resources->Describe().c_str());
     WatchMemory(programAddress);
     timer.finish(lookupsBefore, groupsText, indirect);
     if (profile) reportRecipes();

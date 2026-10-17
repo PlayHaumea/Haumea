@@ -1,3 +1,5 @@
+#include <unordered_set>
+#include <mutex>
 #include "prx/libSceAgcDriver/Execution/include/Driver/Driver.hpp"
 #include "prx/libSceAgcDriver/Execution/include/Driver/Diagnostics.hpp"
 #include "prx/libSceAgcDriver/Execution/include/Driver/Draw/DrawPipeline.hpp"
@@ -179,6 +181,15 @@ DrawVerdict Driver::draw(QueueState& queue, std::span<const std::uint32_t> packe
     std::vector<DrawProgram> programs = decode->programs;
     for (const auto& patch : userPatches) programs[patch.program].userData[patch.index] = patch.value;
     if (const auto skipped = SkippedShader(); skipped != 0 && std::any_of(programs.begin(), programs.end(), [skipped](const DrawProgram& program) { return program.binary.codeAddress == skipped; })) return drawn();
+    if (graphics.stages.path == Graphics::ShaderPath::Geometry && localDevice != nullptr && !localDevice->MeshShader()) {
+        // The geometry path (PS5 primitive shaders) is translated to mesh shaders, which MoltenVK lacks. The draw is left out,
+        // as a skipped shader's is, rather than ending the game; each front program is named once.
+        static std::mutex noted;
+        static std::unordered_set<std::uint64_t> named;
+        std::lock_guard lock(noted);
+        if (named.insert(programs.front().binary.codeAddress).second) std::fprintf(stderr, "[gpu] geometry-path program 0x%llx needs mesh shaders, which this device lacks; its draws are skipped (%zu so far)\n", static_cast<unsigned long long>(programs.front().binary.codeAddress), named.size());
+        return drawn();
+    }
     const auto setMeshIndexBuffer = [&](const Pm4::DrawParameters& parameters) {
         if (!graphics.stages.mesh) return;
         auto& words = programs.front().userData;
@@ -449,6 +460,15 @@ DrawVerdict Driver::draw(QueueState& queue, std::span<const std::uint32_t> packe
         phaseTiming.Phase(DrawRowRectList);
     };
     if (graphics.rectList) buildRectList();
+    if (!programs.empty() && programResults.back() != nullptr && programResults.back()->barycentricEmulation.active && !localDevice->GeometryLimits()) {
+        // Neither route exists on Metal: MoltenVK rejects PerVertexKHR (FragmentBarycentric.hpp) and Metal has no geometry shaders.
+        // The draw is left out, as a skipped shader's is, rather than ending the game; the pixel shader is named once.
+        static std::mutex noted;
+        static std::unordered_set<std::uint64_t> named;
+        std::lock_guard lock(noted);
+        if (named.insert(programs.back().binary.codeAddress).second) std::fprintf(stderr, "[gpu] pixel shader 0x%llx reads barycentrics, which this device can provide neither natively nor through a geometry shader; its draws are skipped\n", static_cast<unsigned long long>(programs.back().binary.codeAddress));
+        return drawn();
+    }
     if (!programs.empty() && programResults.back() != nullptr && programResults.back()->barycentricEmulation.active) {
         require(!graphics.rectList && graphics.stages.path == Graphics::ShaderPath::Vertex && programs.size() == 2 && programResults[0] != nullptr && stages.size() == 2, "a pixel shader that reads barycentrics without VK_KHR_fragment_shader_barycentric needs a vertex shader before it");
         results.push_back(ShaderRecompiler::BuildBarycentricGeometryShader(*programResults[0], *programResults[1], localDevice->Target(), localDevice->GeometryLimits()));

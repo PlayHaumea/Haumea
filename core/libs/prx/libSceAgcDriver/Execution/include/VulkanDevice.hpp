@@ -192,6 +192,7 @@ public:
     bool Presentable() const;
     bool DualSrcBlend() const;
     bool PrimitiveListRestart() const;
+    bool MeshShader() const;
     bool SamplerFilterMinmax() const;
     bool ConservativeRasterization() const;
     VkShaderStageFlags SubgroupStages() const;
