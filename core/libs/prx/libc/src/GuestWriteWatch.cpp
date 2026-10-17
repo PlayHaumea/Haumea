@@ -555,7 +555,15 @@ private:
         thread_local unsigned repeats = 0;
         repeats = address == lastAddress ? repeats + 1 : 0;
         lastAddress = address;
-        if (repeats >= 2) { describe(address, page, state, "still faults after restoring"); return false; }
+        if (repeats >= 3) { describe(address, page, state, "still faults after restoring"); return false; }
+        if (repeats == 2) {
+            // Restoring the same protection did not take (Stray's driver thread: the kernel reports the page read-write, the
+            // store faults again). Take the page through no access and back, so whatever cached the old protection (Rosetta's
+            // view of it) has to look again.
+            ::mprotect(reinterpret_cast<void*>(page), _page, PROT_NONE);
+            ::mprotect(reinterpret_cast<void*>(page), _page, state & ProtectionMask);
+            return true;
+        }
         if (repeats == 1) {
             mach_vm_address_t region = page;
             mach_vm_size_t size = 0;
