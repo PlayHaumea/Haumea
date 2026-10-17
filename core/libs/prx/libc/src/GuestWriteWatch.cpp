@@ -557,11 +557,17 @@ private:
         lastAddress = address;
         if (repeats >= 3) { describe(address, page, state, "still faults after restoring"); return false; }
         if (repeats == 2) {
-            // Restoring the same protection did not take (Stray's driver thread: the kernel reports the page read-write, the
-            // store faults again). Take the page through no access and back, so whatever cached the old protection (Rosetta's
-            // view of it) has to look again.
-            ::mprotect(reinterpret_cast<void*>(page), _page, PROT_NONE);
-            ::mprotect(reinterpret_cast<void*>(page), _page, state & ProtectionMask);
+            // Restoring the page's own protection did not take. Under Rosetta a program sees 4 KB pages while the hardware has 16 KB
+            // ones: while a neighbouring 4 KB page in the same 16 KB one is still watched (read-only), stores to this one keep
+            // faulting although the kernel reports it read-write (Stray's driver thread, every run). Release the whole 16 KB block:
+            // its watched pages are marked written (their contents are re-read, as after a real store) and made writable again.
+            constexpr std::uintptr_t HostPage = 16384;
+            const std::uintptr_t block = page & ~(HostPage - 1);
+            for (std::uintptr_t p = std::max<std::uintptr_t>(block, it->first); p < block + HostPage && p < it->second.end; p += _page) {
+                auto& st = it->second.pages[(p - it->first) / _page];
+                if ((st & Protected) != 0) st = static_cast<std::uint8_t>((st & (ProtectionMask | Fresh)) | Written);
+                ::mprotect(reinterpret_cast<void*>(p), _page, st & ProtectionMask);
+            }
             return true;
         }
         if (repeats == 1) {
