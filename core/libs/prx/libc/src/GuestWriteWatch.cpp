@@ -23,6 +23,7 @@
 #endif
 
 #if defined(__APPLE__)
+#include <sys/ucontext.h>
 #include <atomic>
 #include <cerrno>
 #include <csignal>
@@ -515,6 +516,27 @@ private:
             }
         }
         if (handled) return;
+        {
+            // What kind of fault it was, for faults on pages the kernel reports writable: si_code, and the x86 exception state
+            // Rosetta gives the guest (trap number; error code bit 0 = protection violation, bit 1 = write, bit 2 = user)
+            static std::atomic<int> told{0};
+            if (told.fetch_add(1, std::memory_order_relaxed) < 8) {
+                const auto* uc = static_cast<const ucontext_t*>(context);
+                unsigned trapno = 0, err = 0;
+                unsigned long long faultvaddr = 0;
+#if defined(__x86_64__)
+                if (uc && uc->uc_mcontext) {
+                    trapno = uc->uc_mcontext->__es.__trapno;
+                    err = uc->uc_mcontext->__es.__err;
+                    faultvaddr = uc->uc_mcontext->__es.__faultvaddr;
+                }
+#endif
+                char line[200];
+                const int n = std::snprintf(line, sizeof(line), "[memory] unhandled fault: signal %d si_code %d at 0x%llx, trapno %u err 0x%x faultvaddr 0x%llx\n", signal,
+                                            info->si_code, static_cast<unsigned long long>(reinterpret_cast<std::uintptr_t>(info->si_addr)), trapno, err, faultvaddr);
+                if (n > 0) ::write(2, line, static_cast<std::size_t>(std::min(n, static_cast<int>(sizeof(line) - 1))));
+            }
+        }
         const auto& previous = signal == SIGBUS ? watch._previousBus : watch._previousSegv;
         if ((previous.sa_flags & SA_SIGINFO) != 0 && previous.sa_sigaction != nullptr) {
             previous.sa_sigaction(signal, info, context);
